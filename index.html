@@ -1917,23 +1917,11 @@
     var URL_ = '';
     try { URL_ = window.NGM_FIREBASE_URL || localStorage.getItem('NGM_FB_URL') || ''; } catch (e) {}
     URL_ = URL_.trim().replace(/\/+$/, '');
-    if (!URL_) {
-      try { if (localStorage.getItem('NGM_FB_SKIP')) return; } catch (e) {}
-      window.addEventListener('load', function () {
-        setTimeout(function () {
-          var v = prompt("Synchronisation : colle l'adresse de ta base Firebase (https://...firebaseio.com).\nAnnuler = utiliser sans synchro sur cet appareil.");
-          try {
-            if (v && /^https:\/\/[^\s]+\.(firebaseio\.com|firebasedatabase\.app)\/?$/i.test(v.trim())) { localStorage.setItem('NGM_FB_URL', v.trim()); location.reload(); }
-            else if (v === null) { localStorage.setItem('NGM_FB_SKIP', '1'); }
-            else if (v) { alert("Adresse non valide. Rouvre l'application pour réessayer."); }
-          } catch (e) {}
-        }, 1200);
-      });
-      return;
-    }
+    if (!URL_) return;
     var ENDPOINT = URL_ + '/ngm_fleet.json';
     var PARTS = ['meta', 'trucks', 'transactions', 'routes'];
-    var remote = {}, dirty = {}, applying = false, timer = null, pushing = false, started = false, es = null;
+    // remote = dernier état reçu du serveur ; base = dernier état connu comme synchronisé
+    var remote = {}, base = {}, loaded = false, applying = false, timer = null, pushing = false, es = null;
 
     function getPart(n) {
       if (n === 'meta') return JSON.stringify({ securityPin: appData.securityPin, hideInitialCosts: appData.hideInitialCosts });
@@ -1944,59 +1932,72 @@
       if (n === 'meta') { appData.securityPin = v.securityPin; appData.hideInitialCosts = v.hideInitialCosts; }
       else appData[n] = v;
     }
+    function isDirty(n) { return getPart(n) !== base[n]; }
+    function anyDirty() { return PARTS.some(isDirty); }
+
     function applyRemote() {
       var changed = false;
       PARTS.forEach(function (n) {
         var j = remote[n];
-        if (typeof j !== 'string' || dirty[n]) return;
+        if (typeof j !== 'string') return;
+        if (isDirty(n)) return;                 // modification locale en attente : elle est prioritaire
         if (j !== getPart(n)) { try { setPart(n, j); changed = true; } catch (e) {} }
+        base[n] = j;
       });
       if (changed) { applying = true; try { window.saveData(); } finally { applying = false; } }
+      if (anyDirty()) schedule();
     }
-    function markDirtyAll() { PARTS.forEach(function (n) { if (getPart(n) !== remote[n]) dirty[n] = true; }); }
     function schedule() { clearTimeout(timer); timer = setTimeout(push, 400); }
     function push() {
+      if (!loaded) return;                      // on attend d'avoir lu le serveur avant d'écrire
       if (pushing) { schedule(); return; }
       var body = {}, any = false;
-      PARTS.forEach(function (n) { var j = getPart(n); if (j !== remote[n]) { body[n] = j; dirty[n] = true; any = true; } });
+      PARTS.forEach(function (n) { if (isDirty(n)) { body[n] = getPart(n); any = true; } });
       if (!any) return;
       pushing = true;
       fetch(ENDPOINT, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-        .then(function (r) { if (!r.ok) throw new Error(r.status); Object.keys(body).forEach(function (n) { remote[n] = body[n]; delete dirty[n]; }); })
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          Object.keys(body).forEach(function (n) { base[n] = body[n]; remote[n] = body[n]; });
+        })
         .catch(function () { setTimeout(schedule, 15000); })
-        .then(function () { pushing = false; });
+        .then(function () { pushing = false; if (anyDirty()) schedule(); });
     }
     function onEvent(type, raw) {
       var m; try { m = JSON.parse(raw); } catch (e) { return; }
       if (!m) return;
       var p = m.path || '/', d = m.data;
       if (p === '/') {
-        if (type === 'put') { remote = {}; }
+        if (type === 'put') remote = {};
         if (d && typeof d === 'object') Object.keys(d).forEach(function (k) { remote[k] = d[k]; });
-        if (!d && type === 'put') { markDirtyAll(); push(); return; }
+        if (type === 'put' && !loaded) {
+          loaded = true;
+          if (!d) { PARTS.forEach(function (n) { base[n] = undefined; }); schedule(); return; } // base vide : on y envoie les données de cet appareil
+        }
       } else {
         var k = p.split('/')[1];
         if (type === 'put') { if (d === null) delete remote[k]; else remote[k] = d; }
       }
       applyRemote();
-      markDirtyAll(); if (Object.keys(dirty).length) schedule();
     }
     function connect() {
       if (es) { try { es.close(); } catch (e) {} }
       es = new EventSource(ENDPOINT);
       es.addEventListener('put', function (e) { onEvent('put', e.data); });
       es.addEventListener('patch', function (e) { onEvent('patch', e.data); });
-      es.onerror = function () { /* le navigateur se reconnecte tout seul */ };
     }
     document.addEventListener('DOMContentLoaded', function () {
+      PARTS.forEach(function (n) { base[n] = getPart(n); });
       var orig = window.saveData;
       if (typeof orig === 'function') {
         window.saveData = function () { orig.apply(this, arguments); if (!applying) schedule(); };
       }
       connect();
     });
-    window.addEventListener('online', function () { connect(); schedule(); });
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) { connect(); } });
+    window.addEventListener('online', function () { connect(); });
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && (!es || es.readyState === 2)) connect();
+    });
   })();
   </script>
 
