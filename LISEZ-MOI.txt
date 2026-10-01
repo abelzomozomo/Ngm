@@ -1,0 +1,22 @@
+INSTALLER L'APP GESTION CAMION NGM - DEPUIS UN TELEPHONE (gratuit)
+
+A. Créer la base de données (Firebase)
+1. Va sur console.firebase.google.com, connecte-toi avec un compte Google.
+2. Créer un projet > nom : ngm-camion > sans Google Analytics.
+3. Build > Realtime Database > Créer > mode test > Activer.
+4. Onglet Règles : remplace tout par
+   { "rules": { ".read": true, ".write": true } }
+   puis Publier.
+5. Onglet Données : copie l'adresse https://....firebaseio.com
+
+B. Mettre l'app en ligne (GitHub Pages)
+1. Décompresse NGM_App.zip avec l'app Fichiers.
+2. Sur github.com : crée un compte, puis New repository, nom : ngm, Public, Create.
+3. "uploading an existing file" : sélectionne TOUS les fichiers décompressés, puis Commit changes.
+4. Settings > Pages > Branch : main, dossier / (root) > Save.
+5. Après 1 à 2 minutes, ton lien : https://TONNOM.github.io/ngm/
+
+C. Sur chaque appareil
+1. Ouvre le lien. Au premier lancement, colle l'adresse Firebase quand l'app la demande.
+2. Premier appareil : importe ta sauvegarde pour remplacer les exemples.
+3. Ajoute l'icône : Android (Chrome) menu > Installer l'application ; iPhone (Safari) Partager > Sur l'écran d'accueil.
