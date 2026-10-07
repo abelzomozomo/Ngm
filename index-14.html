@@ -1,0 +1,2437 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion Camion NGM - Système Professionnel</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0c4a6e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Camion NGM">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#075985',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: white !important; color: black !important; overflow: visible !important; }
+      #mainContent { margin-left: 0 !important; padding: 0 !important; }
+    }
+    .print-only { display: none; }
+    
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-full flex flex-col transition-colors duration-200">
+
+  <!-- TOPBAR BANNER -->
+  <header class="bg-brand-900 text-white h-16 fixed top-0 left-0 right-0 z-40 flex justify-between items-center px-4 shadow-md no-print">
+    <div class="flex items-center space-x-3">
+      <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-brand-800 hover:bg-brand-700 text-white transition">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+      </button>
+      <div class="flex items-center space-x-2">
+        <div class="bg-brand-600 p-1.5 rounded-lg">
+          <i data-lucide="truck" class="w-5 h-5 text-white"></i>
+        </div>
+        <span class="font-bold text-lg tracking-wide hidden sm:inline">Gestion Camion NGM</span>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center space-x-2">
+      <button onclick="toggleAdminRole()" id="lockBtn" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+        <i data-lucide="shield-check" class="w-3.5 h-3.5" id="lockIcon"></i>
+        <span id="lockStatusText">MODE ADMINISTRATEUR</span>
+      </button>
+
+      <button onclick="toggleTheme()" class="p-2 rounded-lg bg-brand-800 hover:bg-brand-700 text-white transition">
+        <i data-lucide="moon" id="themeIcon" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="flex pt-16 min-h-screen">
+
+    <!-- SIDEBAR VERTICALE -->
+    <aside id="sidebar" class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 fixed top-16 bottom-0 left-0 z-30 transition-transform duration-300 transform -translate-x-full md:translate-x-0 overflow-y-auto no-print">
+      <div class="p-4 space-y-6">
+
+        <div>
+          <div class="text-[11px] font-bold uppercase text-gray-400 dark:text-gray-500 mb-2 px-2">Menu Principal</div>
+          <nav class="space-y-1">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-brand-50 text-brand-700 dark:bg-gray-700 dark:text-brand-400 transition">
+              <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Tableau de Bord
+            </button>
+            <button onclick="switchTab('trucks')" id="nav-trucks" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i data-lucide="truck" class="w-4 h-4"></i> Flotte & Fiches
+            </button>
+          </nav>
+        </div>
+
+        <div>
+          <div class="text-[11px] font-bold uppercase text-gray-400 dark:text-gray-500 mb-2 px-2">Opérations</div>
+          <nav class="space-y-1">
+            <button onclick="switchTab('revenues')" id="nav-revenues" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i data-lucide="arrow-down-left" class="w-4 h-4 text-emerald-500"></i> Versements / Recettes
+            </button>
+            <button onclick="switchTab('expenses')" id="nav-expenses" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i data-lucide="arrow-up-right" class="w-4 h-4 text-red-500"></i> Dépenses / Vidanges
+            </button>
+            <button onclick="switchTab('routes')" id="nav-routes" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i data-lucide="map-pin" class="w-4 h-4 text-amber-500"></i> Trajets & Itinéraires
+            </button>
+          </nav>
+        </div>
+
+        <div>
+          <div class="text-[11px] font-bold uppercase text-gray-400 dark:text-gray-500 mb-2 px-2">Administration</div>
+          <nav class="space-y-1">
+            <button onclick="switchTab('reports')" id="nav-reports" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i data-lucide="printer" class="w-4 h-4 text-indigo-500"></i> Rapports d'Impression
+            </button>
+            <button onclick="switchTab('security')" id="nav-security" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i> Sécurité & Code PIN
+            </button>
+          </nav>
+        </div>
+
+      </div>
+    </aside>
+
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/40 z-20 md:hidden no-print"></div>
+
+    <!-- MAIN CONTENT -->
+    <main id="mainContent" class="flex-grow md:ml-64 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-all duration-300">
+
+      <!-- BANNIÈRE D'IMPRESSION -->
+      <div class="print-only mb-6 border-b-2 border-gray-800 pb-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <h1 class="text-2xl font-bold uppercase tracking-wider">NGM &amp; TBZ LOGISTIQUE</h1>
+            <p class="text-sm font-bold text-gray-700" id="printReportTitle">Rapport Financier & Exploitation</p>
+          </div>
+          <div class="text-right text-xs space-y-1">
+            <p id="printReportPeriod" class="font-semibold"></p>
+            <p id="printReportTruck" class="font-medium text-gray-600"></p>
+            <p id="printDate" class="text-gray-500"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. TAB DASHBOARD -->
+      <div id="view-dashboard" class="space-y-6">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center text-xs font-semibold uppercase text-emerald-600 mb-1">
+              <span>Total Versements</span>
+              <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+            </div>
+            <div class="text-xl font-bold text-emerald-600" id="dashTotalRevenue">0 FCFA</div>
+            <div class="text-xs text-gray-400 mt-1">Recettes brutes enregistrées</div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center text-xs font-semibold uppercase text-red-500 mb-1">
+              <span>Total Dépenses</span>
+              <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+            </div>
+            <div class="text-xl font-bold text-red-600" id="dashTotalExpenses">0 FCFA</div>
+            <div class="text-xs text-gray-400 mt-1">Entretien, carburant & pièces</div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center text-xs font-semibold uppercase text-amber-500 mb-1">
+              <span>Dette Restante (Achats)</span>
+              <i data-lucide="clock" class="w-4 h-4"></i>
+            </div>
+            <div class="text-xl font-bold text-amber-600" id="dashTotalDebt">0 FCFA</div>
+            <div class="text-xs text-gray-400 mt-1">Reste pour éponger l'achat</div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center text-xs font-semibold uppercase text-indigo-500 mb-1">
+              <span>Gain Pur Net Réel</span>
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </div>
+            <div class="text-xl font-bold text-indigo-600" id="dashTotalProfit">0 FCFA</div>
+            <div class="text-xs text-gray-400 mt-1">Excédent des versements - Dépenses</div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+          <div class="flex justify-between items-center">
+            <h2 class="font-bold text-base flex items-center gap-2">
+              <i data-lucide="bar-chart-3" class="w-5 h-5 text-brand-500"></i> Suivi d'Amortissement & Gain Pur
+            </h2>
+            <button onclick="toggleCostVisibility()" class="text-xs text-brand-600 hover:underline flex items-center gap-1">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i> <span id="costHideText">Afficher Prix D'achat</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase">
+                <tr>
+                  <th class="p-3">Camion & Chauffeur</th>
+                  <th class="p-3">Immatriculation</th>
+                  <th class="p-3 cost-col hidden">Prix d'Achat</th>
+                  <th class="p-3">Versements</th>
+                  <th class="p-3">Dette Restante</th>
+                  <th class="p-3">Gain Pur Brut</th>
+                  <th class="p-3">Dépenses Imputées</th>
+                  <th class="p-3">Gain Pur Net Réel</th>
+                </tr>
+              </thead>
+              <tbody id="dashSummaryTable" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 2. TAB TRUCKS -->
+      <div id="view-trucks" class="hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <div class="lg:col-span-1 bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 no-print space-y-4 admin-only">
+            <h2 class="font-bold text-base flex items-center gap-2 border-b pb-3">
+              <i data-lucide="plus-circle" class="w-5 h-5 text-brand-500"></i> Ajouter un Nouveaux Camion
+            </h2>
+
+            <form id="addTruckForm" class="space-y-3">
+              <div>
+                <label class="block text-xs font-semibold mb-1">Nom / Identifiant</label>
+                <input type="text" id="truckName" required placeholder="ex: Camion Benne NGM-01" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Immatriculation</label>
+                  <input type="text" id="truckImmat" required placeholder="ex: LT-892-AA" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1">Chauffeur</label>
+                  <input type="text" id="truckDriver" required placeholder="ex: Paul K." class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+                </div>
+              </div>
+
+              <details class="bg-gray-50 dark:bg-gray-750 p-3 rounded-lg border border-gray-200 dark:border-gray-700 text-xs">
+                <summary class="font-bold text-gray-700 dark:text-gray-300 cursor-pointer flex justify-between items-center">
+                  <span>Informations Financières & Papiers</span>
+                  <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                </summary>
+                <div class="mt-3 space-y-3">
+                  <div>
+                    <label class="block font-semibold mb-1 text-gray-600 dark:text-gray-400">Montant d'Achat (FCFA)</label>
+                    <input type="number" id="truckCost" placeholder="ex: 25000000" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+                  </div>
+                  <div>
+                    <label class="block font-semibold mb-1 text-gray-600 dark:text-gray-400">N° Carte Grise</label>
+                    <input type="text" id="truckCarteGrise" placeholder="ex: CG-99482-2024" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+                  </div>
+                  <div>
+                    <label class="block font-semibold mb-1 text-gray-600 dark:text-gray-400">N° Châssis / VIN</label>
+                    <input type="text" id="truckChassis" placeholder="ex: VF1234567890ABCD" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+                  </div>
+                  <div>
+                    <label class="block font-semibold mb-1 text-gray-600 dark:text-gray-400">Échéance Assurance</label>
+                    <input type="date" id="truckInsuranceDate" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+                  </div>
+                </div>
+              </details>
+
+              <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg text-sm flex justify-center items-center gap-2 transition">
+                <i data-lucide="save" class="w-4 h-4"></i> Enregistrer
+              </button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-2 space-y-4">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+              <h2 class="font-bold text-base mb-4">Fiches Techniques de la Flotte</h2>
+              <div id="truckCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 3. TAB REVENUES -->
+      <div id="view-revenues" class="hidden space-y-6">
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 class="font-bold text-base flex items-center gap-2">
+              <i data-lucide="arrow-down-left" class="w-5 h-5 text-emerald-500"></i> Historique des Versements (Recettes)
+            </h2>
+            <button onclick="openTxModal('REVENUE')" class="py-2 px-4 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 no-print flex items-center gap-1 transition admin-only">
+              <i data-lucide="plus" class="w-4 h-4"></i> Saisir un Versement
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-gray-100 dark:bg-gray-700 uppercase">
+                <tr>
+                  <th class="p-3">Date & Heure</th>
+                  <th class="p-3">Camion / Chauffeur</th>
+                  <th class="p-3">Type</th>
+                  <th class="p-3">Motif / Description</th>
+                  <th class="p-3">Montant</th>
+                  <th class="p-3 text-right no-print admin-only">Action</th>
+                </tr>
+              </thead>
+              <tbody id="revenueTableBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. TAB EXPENSES -->
+      <div id="view-expenses" class="hidden space-y-6">
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 class="font-bold text-base flex items-center gap-2">
+              <i data-lucide="arrow-up-right" class="w-5 h-5 text-red-500"></i> Historique des Dépenses & Entretien
+            </h2>
+            <button onclick="openTxModal('EXPENSE')" class="py-2 px-4 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 no-print flex items-center gap-1 transition admin-only">
+              <i data-lucide="plus" class="w-4 h-4"></i> Saisir une Dépense
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-gray-100 dark:bg-gray-700 uppercase">
+                <tr>
+                  <th class="p-3">Date & Heure</th>
+                  <th class="p-3">Camion / Chauffeur</th>
+                  <th class="p-3">Catégorie Dépense</th>
+                  <th class="p-3">Motif / Description</th>
+                  <th class="p-3">Montant</th>
+                  <th class="p-3 text-right no-print admin-only">Action</th>
+                </tr>
+              </thead>
+              <tbody id="expenseTableBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. TAB ROUTES -->
+      <div id="view-routes" class="hidden space-y-6">
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 class="font-bold text-base flex items-center gap-2">
+              <i data-lucide="map-pin" class="w-5 h-5 text-amber-500"></i> Suivi des Trajets & Itinéraires
+            </h2>
+            <button onclick="openRouteModal()" class="py-2 px-4 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 no-print flex items-center gap-1 transition admin-only">
+              <i data-lucide="plus" class="w-4 h-4"></i> Enregistrer un Trajet
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-gray-100 dark:bg-gray-700 uppercase">
+                <tr>
+                  <th class="p-3">Date & Heure Départ</th>
+                  <th class="p-3">Camion / Chauffeur</th>
+                  <th class="p-3">Ville / Lieu Départ</th>
+                  <th class="p-3">Ville / Lieu Arrivée</th>
+                  <th class="p-3">Marchandise / Note</th>
+                  <th class="p-3 text-right no-print admin-only">Action</th>
+                </tr>
+              </thead>
+              <tbody id="routeTableBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. TAB REPORTS -->
+      <div id="view-reports" class="hidden space-y-6">
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-6 no-print">
+          <h2 class="font-bold text-base flex items-center gap-2 border-b pb-3">
+            <i data-lucide="printer" class="w-5 h-5 text-indigo-500"></i> Impression de Rapports
+          </h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-xs font-semibold mb-1">Catégorie de Rapport</label>
+              <select id="reportCategorySelect" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+                <option value="GLOBAL">📊 Rapport Global (Bilan Complète)</option>
+                <option value="REVENUE">💚 Versements Uniquement</option>
+                <option value="EXPENSE">🔴 Dépenses Uniquement</option>
+                <option value="ROUTE">🗺️ Trajets Uniquement</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold mb-1">Sélection du Camion</label>
+              <select id="reportTruckFilter" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+                <option value="ALL">Tous les camions</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold mb-1">Date Début</label>
+              <input type="datetime-local" id="reportStartDt" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold mb-1">Date Fin</label>
+              <input type="datetime-local" id="reportEndDt" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center pt-2">
+            <label class="flex items-center gap-2 text-xs font-medium cursor-pointer">
+              <input type="checkbox" id="reportHidePrices" class="rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+              <span>Masquer le Prix d'Achat Initial sur le Rapport</span>
+            </label>
+
+            <button onclick="requestReportPrint()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm flex items-center gap-2 transition">
+              <i data-lucide="printer" class="w-4 h-4"></i> Générer & Imprimer
+            </button>
+          </div>
+        </div>
+
+        <div id="reportPreviewArea" class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+          <div class="border-b pb-3">
+            <h3 id="previewTitle" class="font-bold text-lg text-indigo-600 dark:text-indigo-400">Aperçu du Rapport Sélectionné</h3>
+            <p id="previewSub" class="text-xs text-gray-500">Choisissez les critères ci-dessus puis lancez la génération.</p>
+          </div>
+          <div id="previewContent" class="overflow-x-auto">
+            <p class="text-xs text-gray-400 italic">Aucun rapport généré pour l'instant.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. TAB SECURITY & PIN RESET -->
+      <div id="view-security" class="hidden space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- CHANGEMENT DU CODE PIN -->
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+            <h2 class="font-bold text-base flex items-center gap-2 border-b pb-3">
+              <i data-lucide="lock" class="w-5 h-5 text-amber-500"></i> Modifier le Code PIN Administrateur
+            </h2>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              Modifiez le mot de passe administrateur pour sécuriser l'accès aux modifications.
+            </p>
+
+            <form id="pinConfigForm" class="space-y-3 admin-only">
+              <div>
+                <label class="block text-xs font-semibold mb-1">Nouveau Code PIN (4 chiffres)</label>
+                <input type="password" maxlength="4" id="newPinInput" placeholder="ex: 2026" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+              </div>
+              <button type="submit" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg text-sm flex justify-center items-center gap-2 transition">
+                <i data-lucide="shield" class="w-4 h-4"></i> Enregistrer Nouveau PIN
+              </button>
+            </form>
+
+            <div class="border-t pt-3 mt-3">
+              <h3 class="font-bold text-xs text-gray-700 dark:text-gray-300 mb-1">Mot de passe oublié ? Réinitialisation</h3>
+              <p class="text-xs text-gray-500 mb-2">Utilisez le code maître / sécurité de secours (<strong>2026</strong>) pour réinitialiser le PIN.</p>
+              <button onclick="resetPinToDefault()" class="w-full py-2 border border-brand-500 text-brand-600 hover:bg-brand-50 dark:hover:bg-gray-700 rounded-lg text-xs font-semibold transition admin-only">
+                Réinitialiser le Code PIN à 2026
+              </button>
+            </div>
+          </div>
+
+          <!-- BACKUP & RESTORE -->
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+            <h2 class="font-bold text-base flex items-center gap-2 border-b pb-3">
+              <i data-lucide="database" class="w-5 h-5 text-emerald-500"></i> Sauvegarde & Restauration
+            </h2>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              Exportez vos données dans un fichier `.json` sécurisé pour transférer sur un autre appareil.
+            </p>
+
+            <div class="space-y-2">
+              <button onclick="exportBackupData()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg text-sm flex justify-center items-center gap-2 transition">
+                <i data-lucide="download" class="w-4 h-4"></i> Télécharger la Sauvegarde
+              </button>
+
+              <div class="pt-2 admin-only">
+                <label class="block text-xs font-semibold mb-1">Restaurer Fichier Sauvegarde</label>
+                <input type="file" id="importBackupFile" accept=".json" onchange="importBackupData(event)" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="bg-red-50 dark:bg-red-950/30 p-5 rounded-xl border border-red-200 dark:border-red-900 space-y-3 admin-only">
+          <h3 class="font-bold text-red-700 dark:text-red-400 flex items-center gap-2 text-sm">
+            <i data-lucide="alert-triangle" class="w-4 h-4"></i> Zone Dangereuse - Réinitialisation Totale
+          </h3>
+          <p class="text-xs text-red-600 dark:text-red-300">
+            Efface intégralement tous les camions, versements, dépenses et trajets de ce navigateur.
+          </p>
+          <button onclick="executeDangerousReset()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition">
+            Réinitialiser Tout à Zéro
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL TRANSACTION -->
+  <div id="txModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 no-print">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 id="modalTxTitle" class="font-bold text-lg">Saisir une Opération</h3>
+        <button onclick="closeTxModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+      <form id="txForm" class="space-y-3">
+        <input type="hidden" id="txTypeHidden">
+        
+        <div>
+          <label class="block text-xs font-semibold mb-1">Date et Heure</label>
+          <input type="datetime-local" id="modalTxDateTime" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">Camion</label>
+          <select id="modalTruckSelect" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"></select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">Type / Catégorie</label>
+          <select id="modalCategorySelect" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"></select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">Montant (FCFA)</label>
+          <input type="number" id="modalAmount" required placeholder="ex: 500000" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">Motif / Description Détaillée</label>
+          <input type="text" id="modalLabel" required placeholder="ex: Versement hebdomadaire..." class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeTxModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm">Annuler</button>
+          <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TRAJET -->
+  <div id="routeModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 no-print">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-lg">Enregistrer un Trajet</h3>
+        <button onclick="closeRouteModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+      <form id="routeForm" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1">Date Départ</label>
+          <input type="datetime-local" id="routeDateTime" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">Camion</label>
+          <select id="routeTruckSelect" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"></select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold mb-1">Lieu Départ</label>
+            <input type="text" id="routeStart" required placeholder="ex: Douala" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">Lieu Arrivée</label>
+            <input type="text" id="routeEnd" required placeholder="ex: Yaoundé" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">Marchandise / Note</label>
+          <input type="text" id="routeNotes" required placeholder="ex: 30t Ciment" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeRouteModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm">Annuler</button>
+          <button type="submit" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium">Enregistrer Trajet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODALS MODIFICATION DES DONNEES EXISTANTES -->
+  <div id="editTruckModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 no-print">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-lg">Modifier le Camion</h3>
+        <button onclick="closeEditTruckModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+      <form id="editTruckForm" class="space-y-3">
+        <input type="hidden" id="editTruckId">
+        <div>
+          <label class="block text-xs font-semibold mb-1">Nom / Identifiant</label>
+          <input type="text" id="editTruckName" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Immatriculation</label>
+          <input type="text" id="editTruckImmat" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Chauffeur</label>
+          <input type="text" id="editTruckDriver" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Prix d'Achat</label>
+          <input type="number" id="editTruckCost" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">N° Carte Grise</label>
+          <input type="text" id="editTruckCarteGrise" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">N° Châssis / VIN</label>
+          <input type="text" id="editTruckChassis" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Échéance Assurance</label>
+          <input type="date" id="editTruckInsuranceDate" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditTruckModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm">Annuler</button>
+          <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium">Enregistrer les modifications</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="editTxModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 no-print">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 id="editTxTitle" class="font-bold text-lg">Modifier l'Opération</h3>
+        <button onclick="closeEditTxModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+      <form id="editTxForm" class="space-y-3">
+        <input type="hidden" id="editTxId">
+        <div>
+          <label class="block text-xs font-semibold mb-1">Date et Heure</label>
+          <input type="datetime-local" id="editTxDateTime" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Camion</label>
+          <select id="editTxTruckSelect" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Type / Catégorie</label>
+          <select id="editTxCategorySelect" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Montant (FCFA)</label>
+          <input type="number" id="editTxAmount" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Motif / Description Détaillée</label>
+          <input type="text" id="editTxLabel" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditTxModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm">Annuler</button>
+          <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium">Enregistrer les modifications</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="editRouteModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 no-print">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-lg">Modifier le Trajet</h3>
+        <button onclick="closeEditRouteModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+      <form id="editRouteForm" class="space-y-3">
+        <input type="hidden" id="editRouteId">
+        <div>
+          <label class="block text-xs font-semibold mb-1">Date Départ</label>
+          <input type="datetime-local" id="editRouteDateTime" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Camion</label>
+          <select id="editRouteTruckSelect" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"></select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold mb-1">Lieu Départ</label>
+            <input type="text" id="editRouteStart" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">Lieu Arrivée</label>
+            <input type="text" id="editRouteEnd" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Marchandise / Note</label>
+          <input type="text" id="editRouteNotes" required class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditRouteModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm">Annuler</button>
+          <button type="submit" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium">Enregistrer les modifications</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ACCES INITIAL : MODE CLIENT PAR DEFAUT -->
+  <div id="entryPinModal" class="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4 no-print">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+      <div class="text-center">
+        <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-2">
+          <i data-lucide="lock" class="w-6 h-6"></i>
+        </div>
+        <h3 class="font-bold text-lg">Accès sécurisé</h3>
+        <p class="text-xs text-gray-500">Entrez le code secret pour accéder à l'application. L'application s'ouvrira en <strong>mode client</strong>.</p>
+      </div>
+      <input type="password" id="entryPinInput" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="••••" class="w-full text-center text-2xl font-mono tracking-widest px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700">
+      <button onclick="validateEntryPin()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg text-sm">Entrer</button>
+    </div>
+  </div>
+
+  <!-- MODAL AUTHENTIFICATION PIN -->
+  <div id="pinModal" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 no-print">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full space-y-4">
+      <div class="text-center">
+        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-2">
+          <i data-lucide="lock" class="w-6 h-6"></i>
+        </div>
+        <h3 class="font-bold text-lg">Authentification Administrateur</h3>
+        <p class="text-xs text-gray-500">Saisissez votre code PIN (Initial : <strong>2026</strong>)</p>
+      </div>
+      <div>
+        <input type="password" id="confirmPinInput" maxlength="4" placeholder="••••" class="w-full text-center text-2xl font-mono tracking-widest px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closePinModal()" class="w-full py-2 bg-gray-200 text-gray-800 rounded-lg text-sm">Annuler</button>
+        <button onclick="validatePinAction()" class="w-full py-2 bg-amber-600 text-white font-medium rounded-lg text-sm">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DATA STORE
+    let appData = JSON.parse(localStorage.getItem('NGM_FLEET_DATA_V4')) || {
+      securityPin: "2026", // Mot de passe initial réglé sur 2026
+      hideInitialCosts: true,
+      trucks: [
+        { id: 'truck_1', name: 'Camion Benne NGM-01', immat: 'LT-892-AA', driver: 'Paul K.', cost: 30000000, carteGrise: 'CG-882-2024', chassis: 'VF1882930219', insuranceDate: '2026-12-31' },
+        { id: 'truck_2', name: 'Camion Plateau NGM-02', immat: 'CE-145-BB', driver: 'Michel T.', cost: 35000000, carteGrise: 'CG-145-2023', chassis: 'VF1992019201', insuranceDate: '2026-10-15' }
+      ],
+      transactions: [
+        { id: 'tx_1', truckId: 'truck_1', type: 'REVENUE', category: 'Versement Régulier', amount: 1500000, label: 'Versement Semaine 36', datetime: '2026-09-10T14:30' },
+        { id: 'tx_2', truckId: 'truck_1', type: 'EXPENSE', category: 'Carburant / Gazole', amount: 200000, label: 'Plein Gazole Douala', datetime: '2026-09-11T08:15' },
+        { id: 'tx_3', truckId: 'truck_2', type: 'REVENUE', category: 'Transport Ponctuel', amount: 2000000, label: 'Transport Conteneur', datetime: '2026-09-12T10:00' }
+      ],
+      routes: [
+        { id: 'rt_1', truckId: 'truck_1', start: 'Douala Port', end: 'Yaoundé Central', notes: 'Transport Sable 30 Tonnes', datetime: '2026-09-10T06:00' }
+      ]
+    };
+
+    let isAdminMode = false;
+    let pendingPinAction = null;
+    let initialAccessGranted = false;
+
+    const REVENUE_CATEGORIES = ['Versement Régulier', 'Transport Ponctuel', 'Location Journalière', 'Autre Recette'];
+    const EXPENSE_CATEGORIES = ['Vidange & Entretien', 'Carburant / Gazole', 'Pneumatique / Pneus', 'Péage & Pèse-Essieu', 'Chauffeur / Ration', 'Entretien & Réparation', 'Assurance & Taxes', 'Autre Dépense'];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initTheme();
+      renderApp();
+      showInitialAccess();
+
+      document.getElementById('addTruckForm').addEventListener('submit', handleAddTruck);
+      document.getElementById('txForm').addEventListener('submit', handleAddTransaction);
+      document.getElementById('routeForm').addEventListener('submit', handleAddRoute);
+      document.getElementById('pinConfigForm').addEventListener('submit', handleSavePin);
+      document.getElementById('editTruckForm').addEventListener('submit', handleEditTruck);
+      document.getElementById('editTxForm').addEventListener('submit', handleEditTransaction);
+      document.getElementById('editRouteForm').addEventListener('submit', handleEditRoute);
+
+      const now = new Date().toISOString().slice(0, 16);
+      document.getElementById('modalTxDateTime').value = now;
+      document.getElementById('routeDateTime').value = now;
+      document.getElementById('printDate').textContent = 'Edité le : ' + new Date().toLocaleDateString('fr-FR') + ' à ' + new Date().toLocaleTimeString('fr-FR');
+    });
+
+    function saveData() {
+      localStorage.setItem('NGM_FLEET_DATA_V4', JSON.stringify(appData));
+      renderApp();
+    }
+
+    function showInitialAccess() {
+      initialAccessGranted = false;
+      const modal = document.getElementById('pinModal');
+      const title = modal.querySelector('h3');
+      const text = modal.querySelector('p');
+      const cancelBtn = modal.querySelector('button[onclick=\"closePinModal()\"]');
+      const validateBtn = modal.querySelector('button[onclick=\"validatePinAction()\"]');
+      if (title) title.textContent = "Accès à l'application";
+      if (text) text.innerHTML = "Entrez le code secret pour accéder à l'application.";
+      if (cancelBtn) cancelBtn.classList.add('hidden');
+      if (validateBtn) validateBtn.textContent = 'Entrer';
+      pendingPinAction = () => {
+        initialAccessGranted = true;
+        isAdminMode = false;
+        renderApp();
+      };
+      document.getElementById('confirmPinInput').value = '';
+      modal.classList.remove('hidden');
+      setTimeout(() => document.getElementById('confirmPinInput').focus(), 50);
+    }
+
+    function validateEntryPin() {
+      const pinInput = document.getElementById('entryPinInput').value;
+      const targetPin = appData.securityPin || "2026";
+      if (pinInput === targetPin) {
+        isAdminMode = false;
+        document.getElementById('entryPinModal').classList.add('hidden');
+        renderApp();
+      } else {
+        alert("Code secret incorrect ! Accès refusé.");
+        document.getElementById('entryPinInput').value = '';
+        document.getElementById('entryPinInput').focus();
+      }
+    }
+
+    // ADMIN MODE & PIN LOGIC
+    function toggleAdminRole() {
+      if (!initialAccessGranted) { showInitialAccess(); return; }
+      if (isAdminMode) {
+        isAdminMode = false;
+        renderApp();
+      } else {
+        requirePin(() => {
+          isAdminMode = true;
+          renderApp();
+        });
+      }
+    }
+
+    function requirePin(actionCallback) {
+      pendingPinAction = actionCallback;
+      document.getElementById('confirmPinInput').value = '';
+      document.getElementById('pinModal').classList.remove('hidden');
+    }
+
+    function closePinModal() {
+      if (!initialAccessGranted) return;
+      document.getElementById('pinModal').classList.add('hidden');
+      pendingPinAction = null;
+    }
+
+    function validatePinAction() {
+      const pinInput = document.getElementById('confirmPinInput').value;
+      const targetPin = appData.securityPin || "2026";
+      if (pinInput === targetPin) {
+        const action = pendingPinAction;
+        closePinModal();
+        if (action) action();
+        const modal = document.getElementById('pinModal');
+        const cancelBtn = modal.querySelector('button[onclick=\"closePinModal()\"]');
+        const validateBtn = modal.querySelector('button[onclick=\"validatePinAction()\"]');
+        if (cancelBtn) cancelBtn.classList.remove('hidden');
+        if (validateBtn) validateBtn.textContent = 'Valider';
+        const title = modal.querySelector('h3');
+        const text = modal.querySelector('p');
+        if (title) title.textContent = 'Authentification Administrateur';
+        if (text) text.innerHTML = 'Saisissez votre code PIN.';
+      } else {
+        alert("Code PIN Incorrect ! Accès refusé.");
+      }
+    }
+
+    // RÉINITIALISATION DU PIN PAR CODE SECOURS
+    function resetPinToDefault() {
+      const masterCode = prompt("Saisissez le Code de Secours Principal (Code par défaut : 2026) :");
+      if (masterCode === "2026") {
+        appData.securityPin = "2026";
+        saveData();
+        alert("Succès ! Votre Code PIN a été réinitialisé à '2026'.");
+      } else if (masterCode !== null) {
+        alert("Code de secours invalide !");
+      }
+    }
+
+    // NAVIGATION & THEME
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      document.getElementById('sidebarOverlay').classList.toggle('hidden');
+    }
+
+    function switchTab(tabName) {
+      ['dashboard', 'trucks', 'revenues', 'expenses', 'routes', 'reports', 'security'].forEach(t => {
+        document.getElementById('view-' + t).classList.add('hidden');
+        const navBtn = document.getElementById('nav-' + t);
+        if (navBtn) {
+          navBtn.classList.remove('bg-brand-50', 'text-brand-700', 'dark:bg-gray-700', 'dark:text-brand-400');
+          navBtn.classList.add('text-gray-600', 'dark:text-gray-300');
+        }
+      });
+
+      document.getElementById('view-' + tabName).classList.remove('hidden');
+      const activeNav = document.getElementById('nav-' + tabName);
+      if (activeNav) {
+        activeNav.classList.add('bg-brand-50', 'text-brand-700', 'dark:bg-gray-700', 'dark:text-brand-400');
+        activeNav.classList.remove('text-gray-600', 'dark:text-gray-300');
+      }
+
+      if (window.innerWidth < 768) {
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+        document.getElementById('sidebarOverlay').classList.add('hidden');
+      }
+    }
+
+    function initTheme() {
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.theme = isDark ? 'dark' : 'light';
+    }
+
+    function toggleCostVisibility() {
+      appData.hideInitialCosts = !appData.hideInitialCosts;
+      saveData();
+    }
+
+    function formatFCFA(amount) {
+      return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+    }
+
+    function formatDateTime(dtStr) {
+      if (!dtStr) return '-';
+      const d = new Date(dtStr);
+      return d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function handleSavePin(e) {
+      e.preventDefault();
+      const pin = document.getElementById('newPinInput').value.trim();
+      if (pin.length === 4 && !isNaN(pin)) {
+        appData.securityPin = pin;
+        saveData();
+        alert("Code PIN modifié avec succès !");
+      } else {
+        alert("Le Code PIN doit contenir exactement 4 chiffres.");
+      }
+    }
+
+    // GESTION DES CAMIONS & TRANSACTIONS
+    function handleAddTruck(e) {
+      e.preventDefault();
+      if (!isAdminMode) return;
+      const name = document.getElementById('truckName').value.trim();
+      const immat = document.getElementById('truckImmat').value.trim();
+      const driver = document.getElementById('truckDriver').value.trim();
+      const cost = parseFloat(document.getElementById('truckCost').value) || 0;
+      const carteGrise = document.getElementById('truckCarteGrise').value.trim();
+      const chassis = document.getElementById('truckChassis').value.trim();
+      const insuranceDate = document.getElementById('truckInsuranceDate').value;
+
+      appData.trucks.push({
+        id: 'truck_' + Date.now(),
+        name,
+        immat,
+        driver,
+        cost,
+        carteGrise,
+        chassis,
+        insuranceDate
+      });
+
+      saveData();
+      document.getElementById('addTruckForm').reset();
+    }
+
+    function openEditTruckModal(truckId) {
+      if (!isAdminMode) { requirePin(() => { isAdminMode = true; renderApp(); }); return; }
+      requirePin(() => {
+        const truck = appData.trucks.find(t => t.id === truckId);
+        if (!truck) return;
+        document.getElementById('editTruckId').value = truck.id;
+        document.getElementById('editTruckName').value = truck.name || '';
+        document.getElementById('editTruckImmat').value = truck.immat || '';
+        document.getElementById('editTruckDriver').value = truck.driver || '';
+        document.getElementById('editTruckCost').value = truck.cost ?? '';
+        document.getElementById('editTruckCarteGrise').value = truck.carteGrise || '';
+        document.getElementById('editTruckChassis').value = truck.chassis || '';
+        document.getElementById('editTruckInsuranceDate').value = truck.insuranceDate || '';
+        document.getElementById('editTruckModal').classList.remove('hidden');
+      });
+    }
+
+    function closeEditTruckModal() {
+      document.getElementById('editTruckModal').classList.add('hidden');
+    }
+
+    function handleEditTruck(e) {
+      e.preventDefault();
+      if (!isAdminMode) return;
+      const truck = appData.trucks.find(t => t.id === document.getElementById('editTruckId').value);
+      if (!truck) return;
+      truck.name = document.getElementById('editTruckName').value.trim();
+      truck.immat = document.getElementById('editTruckImmat').value.trim();
+      truck.driver = document.getElementById('editTruckDriver').value.trim();
+      truck.cost = parseFloat(document.getElementById('editTruckCost').value) || 0;
+      truck.carteGrise = document.getElementById('editTruckCarteGrise').value.trim();
+      truck.chassis = document.getElementById('editTruckChassis').value.trim();
+      truck.insuranceDate = document.getElementById('editTruckInsuranceDate').value;
+      closeEditTruckModal();
+      saveData();
+    }
+
+    function deleteTruck(truckId) {
+      if (!isAdminMode) { requirePin(() => { isAdminMode = true; renderApp(); }); return; }
+      requirePin(() => {
+        if (confirm("Supprimer ce camion et tout son historique ?")) {
+          appData.trucks = appData.trucks.filter(t => t.id !== truckId);
+          appData.transactions = appData.transactions.filter(tx => tx.truckId !== truckId);
+          appData.routes = appData.routes.filter(r => r.truckId !== truckId);
+          saveData();
+        }
+      });
+    }
+
+    function openTxModal(type) {
+      if (!isAdminMode) { requirePin(() => { isAdminMode = true; renderApp(); }); return; }
+      if (appData.trucks.length === 0) {
+        alert("Ajoutez d'abord un camion !");
+        return;
+      }
+      document.getElementById('txTypeHidden').value = type;
+      document.getElementById('modalTxTitle').textContent = type === 'REVENUE' ? 'Saisir un Versement' : 'Saisir une Dépense';
+      
+      const selectTruck = document.getElementById('modalTruckSelect');
+      selectTruck.innerHTML = '';
+      appData.trucks.forEach(t => {
+        selectTruck.innerHTML += `<option value="${t.id}">${t.name} (${t.immat} - ${t.driver})</option>`;
+      });
+
+      const selectCat = document.getElementById('modalCategorySelect');
+      selectCat.innerHTML = '';
+      const categories = type === 'REVENUE' ? REVENUE_CATEGORIES : EXPENSE_CATEGORIES;
+      categories.forEach(c => {
+        selectCat.innerHTML += `<option value="${c}">${c}</option>`;
+      });
+
+      document.getElementById('modalTxDateTime').value = new Date().toISOString().slice(0, 16);
+      document.getElementById('txModal').classList.remove('hidden');
+    }
+
+    function closeTxModal() {
+      document.getElementById('txModal').classList.add('hidden');
+    }
+
+    function handleAddTransaction(e) {
+      e.preventDefault();
+      if (!isAdminMode) return;
+      const type = document.getElementById('txTypeHidden').value;
+      const truckId = document.getElementById('modalTruckSelect').value;
+      const category = document.getElementById('modalCategorySelect').value;
+      const amount = parseFloat(document.getElementById('modalAmount').value);
+      const label = document.getElementById('modalLabel').value.trim();
+      const datetime = document.getElementById('modalTxDateTime').value;
+
+      if (!truckId || isNaN(amount) || !label || !datetime) return;
+
+      const addTransactionAfterPin = () => {
+        appData.transactions.push({
+          id: 'tx_' + Date.now(),
+          truckId,
+          type,
+          category,
+          amount,
+          label,
+          datetime
+        });
+
+        closeTxModal();
+        document.getElementById('modalAmount').value = '';
+        document.getElementById('modalLabel').value = '';
+        saveData();
+      };
+
+      requirePin(addTransactionAfterPin);
+    }
+
+    function openEditTxModal(txId) {
+      if (!isAdminMode) { requirePin(() => { isAdminMode = true; renderApp(); }); return; }
+      requirePin(() => {
+        const tx = appData.transactions.find(t => t.id === txId);
+        if (!tx) return;
+        document.getElementById('editTxId').value = tx.id;
+        document.getElementById('editTxTitle').textContent = tx.type === 'REVENUE' ? 'Modifier le Versement' : 'Modifier la Dépense';
+
+        const selectTruck = document.getElementById('editTxTruckSelect');
+        selectTruck.innerHTML = '';
+        appData.trucks.forEach(t => {
+          selectTruck.innerHTML += `<option value="${t.id}">${t.name} (${t.immat} - ${t.driver})</option>`;
+        });
+        selectTruck.value = tx.truckId;
+
+        const selectCat = document.getElementById('editTxCategorySelect');
+        selectCat.innerHTML = '';
+        const categories = tx.type === 'REVENUE' ? REVENUE_CATEGORIES : EXPENSE_CATEGORIES;
+        categories.forEach(c => {
+          selectCat.innerHTML += `<option value="${c}">${c}</option>`;
+        });
+        selectCat.value = tx.category;
+
+        document.getElementById('editTxDateTime').value = tx.datetime || '';
+        document.getElementById('editTxAmount').value = tx.amount ?? '';
+        document.getElementById('editTxLabel').value = tx.label || '';
+        document.getElementById('editTxModal').classList.remove('hidden');
+      });
+    }
+
+    function closeEditTxModal() {
+      document.getElementById('editTxModal').classList.add('hidden');
+    }
+
+    function handleEditTransaction(e) {
+      e.preventDefault();
+      if (!isAdminMode) return;
+      const tx = appData.transactions.find(t => t.id === document.getElementById('editTxId').value);
+      if (!tx) return;
+      tx.truckId = document.getElementById('editTxTruckSelect').value;
+      tx.category = document.getElementById('editTxCategorySelect').value;
+      tx.amount = parseFloat(document.getElementById('editTxAmount').value);
+      tx.label = document.getElementById('editTxLabel').value.trim();
+      tx.datetime = document.getElementById('editTxDateTime').value;
+      closeEditTxModal();
+      saveData();
+    }
+
+    function deleteTx(txId) {
+      if (!isAdminMode) return;
+      requirePin(() => {
+        if (confirm("Supprimer cette opération ?")) {
+          appData.transactions = appData.transactions.filter(tx => tx.id !== txId);
+          saveData();
+        }
+      });
+    }
+
+    function openRouteModal() {
+      if (!isAdminMode) { requirePin(() => { isAdminMode = true; renderApp(); }); return; }
+      if (appData.trucks.length === 0) {
+        alert("Ajoutez d'abord un camion !");
+        return;
+      }
+      const selectTruck = document.getElementById('routeTruckSelect');
+      selectTruck.innerHTML = '';
+      appData.trucks.forEach(t => {
+        selectTruck.innerHTML += `<option value="${t.id}">${t.name} (${t.immat} - ${t.driver})</option>`;
+      });
+
+      document.getElementById('routeDateTime').value = new Date().toISOString().slice(0, 16);
+      document.getElementById('routeModal').classList.remove('hidden');
+    }
+
+    function closeRouteModal() {
+      document.getElementById('routeModal').classList.add('hidden');
+    }
+
+    function handleAddRoute(e) {
+      e.preventDefault();
+      if (!isAdminMode) return;
+      const truckId = document.getElementById('routeTruckSelect').value;
+      const start = document.getElementById('routeStart').value.trim();
+      const end = document.getElementById('routeEnd').value.trim();
+      const notes = document.getElementById('routeNotes').value.trim();
+      const datetime = document.getElementById('routeDateTime').value;
+
+      if (!truckId || !start || !end || !datetime) return;
+
+      appData.routes.push({
+        id: 'rt_' + Date.now(),
+        truckId,
+        start,
+        end,
+        notes,
+        datetime
+      });
+
+      closeRouteModal();
+      document.getElementById('routeStart').value = '';
+      document.getElementById('routeEnd').value = '';
+      document.getElementById('routeNotes').value = '';
+      saveData();
+    }
+
+    function openEditRouteModal(rtId) {
+      if (!isAdminMode) { requirePin(() => { isAdminMode = true; renderApp(); }); return; }
+      requirePin(() => {
+        const route = appData.routes.find(r => r.id === rtId);
+        if (!route) return;
+        document.getElementById('editRouteId').value = route.id;
+        document.getElementById('editRouteDateTime').value = route.datetime || '';
+
+        const selectTruck = document.getElementById('editRouteTruckSelect');
+        selectTruck.innerHTML = '';
+        appData.trucks.forEach(t => {
+          selectTruck.innerHTML += `<option value="${t.id}">${t.name} (${t.immat} - ${t.driver})</option>`;
+        });
+        selectTruck.value = route.truckId;
+
+        document.getElementById('editRouteStart').value = route.start || '';
+        document.getElementById('editRouteEnd').value = route.end || '';
+        document.getElementById('editRouteNotes').value = route.notes || '';
+        document.getElementById('editRouteModal').classList.remove('hidden');
+      });
+    }
+
+    function closeEditRouteModal() {
+      document.getElementById('editRouteModal').classList.add('hidden');
+    }
+
+    function handleEditRoute(e) {
+      e.preventDefault();
+      if (!isAdminMode) return;
+      const route = appData.routes.find(r => r.id === document.getElementById('editRouteId').value);
+      if (!route) return;
+      route.truckId = document.getElementById('editRouteTruckSelect').value;
+      route.start = document.getElementById('editRouteStart').value.trim();
+      route.end = document.getElementById('editRouteEnd').value.trim();
+      route.notes = document.getElementById('editRouteNotes').value.trim();
+      route.datetime = document.getElementById('editRouteDateTime').value;
+      closeEditRouteModal();
+      saveData();
+    }
+
+    function deleteRoute(rtId) {
+      if (!isAdminMode) { requirePin(() => { isAdminMode = true; renderApp(); }); return; }
+      requirePin(() => {
+        if (confirm("Supprimer ce trajet ?")) {
+          appData.routes = appData.routes.filter(r => r.id !== rtId);
+          saveData();
+        }
+      });
+    }
+
+    // IMPRESSION ET RAPPORTS
+    function requestReportPrint() {
+      if (!isAdminMode) {
+        requirePin(() => { isAdminMode = true; renderApp(); generateAndPrintReport(); });
+        return;
+      }
+      generateAndPrintReport();
+    }
+
+    function generateAndPrintReport() {
+      const category = document.getElementById('reportCategorySelect').value;
+      const truckFilter = document.getElementById('reportTruckFilter').value;
+      const startDt = document.getElementById('reportStartDt').value;
+      const endDt = document.getElementById('reportEndDt').value;
+      const hidePrices = document.getElementById('reportHidePrices').checked;
+
+      const container = document.getElementById('previewContent');
+      const title = document.getElementById('previewTitle');
+
+      let selectedTrucks = appData.trucks;
+      if (truckFilter !== 'ALL') {
+        selectedTrucks = appData.trucks.filter(t => t.id === truckFilter);
+      }
+
+      let truckNameStr = truckFilter === 'ALL' ? 'Toute la flotte' : (selectedTrucks[0] ? selectedTrucks[0].name + ' (' + selectedTrucks[0].immat + ')' : '');
+      let periodStr = (startDt && endDt) ? `Du ${formatDateTime(startDt)} au ${formatDateTime(endDt)}` : 'Historique complet';
+
+      document.getElementById('printReportPeriod').textContent = periodStr;
+      document.getElementById('printReportTruck').textContent = 'Filtre : ' + truckNameStr;
+
+      let filteredTxs = appData.transactions.filter(tx => {
+        if (truckFilter !== 'ALL' && tx.truckId !== truckFilter) return false;
+        if (startDt && tx.datetime < startDt) return false;
+        if (endDt && tx.datetime > endDt) return false;
+        return true;
+      });
+
+      let filteredRoutes = appData.routes.filter(r => {
+        if (truckFilter !== 'ALL' && r.truckId !== truckFilter) return false;
+        if (startDt && r.datetime < startDt) return false;
+        if (endDt && r.datetime > endDt) return false;
+        return true;
+      });
+
+      let html = '';
+
+      if (category === 'GLOBAL') {
+        title.textContent = "RAPPORT GLOBAL D'EXPLOITATION";
+        document.getElementById('printReportTitle').textContent = "RAPPORT GLOBAL & BILAN D'AMORTISSEMENT";
+
+        html = `
+          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead class="bg-gray-100 dark:bg-gray-700 uppercase border-b">
+              <tr>
+                <th class="p-2">Camion</th>
+                ${!hidePrices ? '<th class="p-2">Prix d\'Achat</th>' : ''}
+                <th class="p-2">Versements</th>
+                <th class="p-2">Dette Restante</th>
+                <th class="p-2">Dépenses Imputées</th>
+                <th class="p-2">Gain Pur Net Réel</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+        `;
+
+        selectedTrucks.forEach(t => {
+          const tTxs = filteredTxs.filter(x => x.truckId === t.id);
+          const rev = tTxs.filter(x => x.type === 'REVENUE').reduce((a, b) => a + b.amount, 0);
+          const exp = tTxs.filter(x => x.type === 'EXPENSE').reduce((a, b) => a + b.amount, 0);
+
+          // RÈGLE COMPTABLE DE SÉPARATION Dépenses / Gain Pur
+          const remainingDebt = Math.max(0, t.cost - rev);
+          const rawProfit = Math.max(0, rev - t.cost); // Le Gain Pur Brut commence dès que versements > prix achat
+          const netProfit = rawProfit - exp; // Les dépenses s'imputent UNIQUEMENT sur le gain pur
+
+          html += `
+            <tr>
+              <td class="p-2 font-bold">${t.name}<br><span class="text-xs font-normal text-gray-500">${t.immat} - ${t.driver}</span></td>
+              ${!hidePrices ? `<td class="p-2 font-mono">${formatFCFA(t.cost)}</td>` : ''}
+              <td class="p-2 text-emerald-600 font-bold">${formatFCFA(rev)}</td>
+              <td class="p-2 text-amber-600 font-bold">${formatFCFA(remainingDebt)}</td>
+              <td class="p-2 text-blue-600 font-bold">${formatFCFA(rawProfit)}</td>
+              <td class="p-2 text-red-600 font-bold">${formatFCFA(exp)}</td>
+              <td class="p-2 text-indigo-600 font-bold">${formatFCFA(netProfit)}</td>
+            </tr>
+          `;
+        });
+        html += `</tbody></table>`;
+
+      } else if (category === 'REVENUE') {
+        title.textContent = "RAPPORT SPÉCIFIQUE : VERSEMENTS";
+        document.getElementById('printReportTitle').textContent = "RAPPORT VERSEMENTS / RECETTES";
+        
+        const revTxs = filteredTxs.filter(x => x.type === 'REVENUE');
+        const totalRev = revTxs.reduce((a, b) => a + b.amount, 0);
+
+        html = `
+          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead class="bg-gray-100 dark:bg-gray-700 uppercase border-b">
+              <tr>
+                <th class="p-2">Date & Heure</th>
+                <th class="p-2">Camion</th>
+                <th class="p-2">Type</th>
+                <th class="p-2">Motif</th>
+                <th class="p-2">Montant</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+        `;
+        revTxs.forEach(t => {
+          const trk = appData.trucks.find(x => x.id === t.truckId);
+          html += `
+            <tr>
+              <td class="p-2 font-mono">${formatDateTime(t.datetime)}</td>
+              <td class="p-2 font-bold">${trk ? trk.name + ' (' + trk.immat + ')' : '-'}</td>
+              <td class="p-2">${t.category}</td>
+              <td class="p-2">${t.label}</td>
+              <td class="p-2 font-bold text-emerald-600">+${formatFCFA(t.amount)}</td>
+            </tr>
+          `;
+        });
+        html += `
+            </tbody>
+          </table>
+          <div class="mt-4 p-3 bg-emerald-50 dark:bg-gray-700 text-emerald-800 dark:text-emerald-300 font-bold text-right text-base rounded-lg">
+            Total Versements : ${formatFCFA(totalRev)}
+          </div>
+        `;
+
+      } else if (category === 'EXPENSE') {
+        title.textContent = "RAPPORT SPÉCIFIQUE : DÉPENSES & MAINTENANCE";
+        document.getElementById('printReportTitle').textContent = "RAPPORT DÉPENSES";
+
+        const expTxs = filteredTxs.filter(x => x.type === 'EXPENSE');
+        const totalExp = expTxs.reduce((a, b) => a + b.amount, 0);
+
+        html = `
+          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead class="bg-gray-100 dark:bg-gray-700 uppercase border-b">
+              <tr>
+                <th class="p-2">Date & Heure</th>
+                <th class="p-2">Camion</th>
+                <th class="p-2">Catégorie</th>
+                <th class="p-2">Motif</th>
+                <th class="p-2">Montant</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+        `;
+        expTxs.forEach(t => {
+          const trk = appData.trucks.find(x => x.id === t.truckId);
+          html += `
+            <tr>
+              <td class="p-2 font-mono">${formatDateTime(t.datetime)}</td>
+              <td class="p-2 font-bold">${trk ? trk.name + ' (' + trk.immat + ')' : '-'}</td>
+              <td class="p-2">${t.category}</td>
+              <td class="p-2">${t.label}</td>
+              <td class="p-2 font-bold text-red-600">-${formatFCFA(t.amount)}</td>
+            </tr>
+          `;
+        });
+        html += `
+            </tbody>
+          </table>
+          <div class="mt-4 p-3 bg-red-50 dark:bg-gray-700 text-red-800 dark:text-red-300 font-bold text-right text-base rounded-lg">
+            Total Dépenses : ${formatFCFA(totalExp)}
+          </div>
+        `;
+
+      } else if (category === 'ROUTE') {
+        title.textContent = "RAPPORT SPÉCIFIQUE : TRAJETS";
+        document.getElementById('printReportTitle').textContent = "RAPPORT TRAJETS & ITINÉRAIRES";
+
+        html = `
+          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead class="bg-gray-100 dark:bg-gray-700 uppercase border-b">
+              <tr>
+                <th class="p-2">Date Départ</th>
+                <th class="p-2">Camion / Chauffeur</th>
+                <th class="p-2">Départ</th>
+                <th class="p-2">Arrivée</th>
+                <th class="p-2">Marchandise</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+        `;
+        filteredRoutes.forEach(r => {
+          const trk = appData.trucks.find(x => x.id === r.truckId);
+          html += `
+            <tr>
+              <td class="p-2 font-mono">${formatDateTime(r.datetime)}</td>
+              <td class="p-2 font-bold">${trk ? trk.name + ' (' + trk.driver + ')' : '-'}</td>
+              <td class="p-2 text-amber-600 font-semibold">${r.start}</td>
+              <td class="p-2 text-emerald-600 font-semibold">${r.end}</td>
+              <td class="p-2">${r.notes}</td>
+            </tr>
+          `;
+        });
+        html += `</tbody></table>`;
+      }
+
+      container.innerHTML = html;
+      window.print();
+    }
+
+    function exportBackupData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `NGM_BACKUP_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importBackupData(event) {
+      if (!isAdminMode) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && imported.trucks && imported.transactions) {
+            appData = imported;
+            saveData();
+            alert("Restauration effectuée avec succès !");
+          } else {
+            alert("Fichier de sauvegarde invalide.");
+          }
+        } catch (err) {
+          alert("Erreur de lecture du fichier.");
+        }
+      };
+      reader.readAsText(event.target.files[0]);
+    }
+
+    function executeDangerousReset() {
+      if (!isAdminMode) return;
+      requirePin(() => {
+        if (confirm("🔴 EFFACER L'ENSEMBLE DES DONNÉES ?")) {
+          appData = { securityPin: "2026", hideInitialCosts: true, trucks: [], transactions: [], routes: [] };
+          saveData();
+          alert("Base réinitialisée.");
+        }
+      });
+    }
+
+    // MAIN RENDER FUNCTION
+    function renderApp() {
+      const lockStatusText = document.getElementById('lockStatusText');
+      const lockIcon = document.getElementById('lockIcon');
+      const lockBtn = document.getElementById('lockBtn');
+      
+      if (isAdminMode) {
+        lockStatusText.textContent = "MODE ADMINISTRATEUR";
+        lockIcon.setAttribute('data-lucide', 'shield-check');
+        lockBtn.className = "px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition";
+      } else {
+        lockStatusText.textContent = "MODE CLIENT (RESTREINT)";
+        lockIcon.setAttribute('data-lucide', 'lock');
+        lockBtn.className = "px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold flex items-center gap-1.5 transition";
+      }
+
+      document.querySelectorAll('.admin-only').forEach(el => {
+        if (isAdminMode) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+
+      const costCols = document.querySelectorAll('.cost-col');
+      const costHideText = document.getElementById('costHideText');
+      if (appData.hideInitialCosts) {
+        costCols.forEach(c => c.classList.add('hidden'));
+        if (costHideText) costHideText.textContent = "Afficher Prix d'Achat";
+      } else {
+        costCols.forEach(c => c.classList.remove('hidden'));
+        if (costHideText) costHideText.textContent = "Masquer Prix d'Achat";
+      }
+
+      // CALCULS GLOBAUX KPI AVEC LA NOUVELLE RÈGLE COMPTABLE
+      let totalRevenue = 0, totalExpenses = 0, totalDebt = 0, totalProfitNet = 0;
+
+      appData.transactions.forEach(tx => {
+        if (tx.type === 'REVENUE') totalRevenue += tx.amount;
+        if (tx.type === 'EXPENSE') totalExpenses += tx.amount;
+      });
+
+      const dashTbody = document.getElementById('dashSummaryTable');
+      dashTbody.innerHTML = '';
+
+      appData.trucks.forEach(t => {
+        const tTxs = appData.transactions.filter(x => x.truckId === t.id);
+        const rev = tTxs.filter(x => x.type === 'REVENUE').reduce((a, b) => a + b.amount, 0);
+        const exp = tTxs.filter(x => x.type === 'EXPENSE').reduce((a, b) => a + b.amount, 0);
+
+        // FORMULES APPLIQUÉES :
+        // 1. Les versements épongent la dette
+        const remainingDebt = Math.max(0, t.cost - rev);
+        
+        // 2. Le gain pur commence uniquement lorsque la dette est entièrement remboursée (rev > cost)
+        const rawProfit = Math.max(0, rev - t.cost);
+
+        // 3. Les dépenses s'imputent sur les gains purs
+        const netProfit = rawProfit - exp;
+
+        totalDebt += remainingDebt;
+        totalProfitNet += netProfit;
+
+        dashTbody.innerHTML += `
+          <tr>
+            <td class="p-3 font-bold">${t.name}<br><span class="text-xs text-gray-500 font-normal">Chauffeur: ${t.driver}</span></td>
+            <td class="p-3 font-mono">${t.immat}</td>
+            <td class="p-3 font-mono cost-col ${appData.hideInitialCosts ? 'hidden' : ''}">${formatFCFA(t.cost)}</td>
+            <td class="p-3 text-emerald-600 font-bold">${formatFCFA(rev)}</td>
+            <td class="p-3 text-amber-600 font-bold">${formatFCFA(remainingDebt)}</td>
+            <td class="p-3 text-blue-600 font-bold">${formatFCFA(rawProfit)}</td>
+            <td class="p-3 text-red-600 font-bold">${formatFCFA(exp)}</td>
+            <td class="p-3 font-bold ${netProfit >= 0 ? 'text-indigo-600' : 'text-red-500'}">${formatFCFA(netProfit)}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('dashTotalRevenue').textContent = formatFCFA(totalRevenue);
+      document.getElementById('dashTotalExpenses').textContent = formatFCFA(totalExpenses);
+      document.getElementById('dashTotalDebt').textContent = formatFCFA(totalDebt);
+      document.getElementById('dashTotalProfit').textContent = formatFCFA(totalProfitNet);
+
+      // Render Truck Cards
+      const truckContainer = document.getElementById('truckCardsContainer');
+      const reportTruckFilter = document.getElementById('reportTruckFilter');
+      truckContainer.innerHTML = '';
+      reportTruckFilter.innerHTML = '<option value="ALL">Tous les camions</option>';
+
+      appData.trucks.forEach(t => {
+        reportTruckFilter.innerHTML += `<option value="${t.id}">${t.name} (${t.immat})</option>`;
+        
+        const tTxs = appData.transactions.filter(x => x.truckId === t.id);
+        const rev = tTxs.filter(x => x.type === 'REVENUE').reduce((a, b) => a + b.amount, 0);
+        const remaining = Math.max(0, t.cost - rev);
+
+        truckContainer.innerHTML += `
+          <div class="p-4 border dark:border-gray-700 rounded-xl space-y-3 bg-gray-50 dark:bg-gray-750 relative">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="font-bold text-base text-gray-900 dark:text-gray-100">${t.name}</h3>
+                <p class="text-xs text-brand-600 dark:text-brand-400 font-bold">Immat: ${t.immat}</p>
+                <p class="text-xs text-gray-500">Chauffeur: ${t.driver}</p>
+              </div>
+              ${isAdminMode ? `
+                <button onclick="openEditTruckModal('${t.id}')" class="text-brand-600 hover:bg-brand-100 dark:hover:bg-gray-700 p-1.5 rounded-lg no-print" title="Modifier">
+                  <i data-lucide="pencil" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteTruck('${t.id}')" class="text-red-500 hover:bg-red-100 dark:hover:bg-red-950 p-1.5 rounded-lg no-print">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              ` : ''}
+            </div>
+
+            <div class="text-xs space-y-1.5 border-t pt-2 dark:border-gray-700">
+              <div class="flex justify-between ${appData.hideInitialCosts ? 'hidden' : ''}"><span>Prix d'Achat :</span> <span class="font-bold">${formatFCFA(t.cost)}</span></div>
+              <div class="flex justify-between"><span>Dette Restante :</span> <span class="font-bold text-amber-600">${formatFCFA(remaining)}</span></div>
+              <div class="flex justify-between"><span>Carte Grise :</span> <span class="font-mono">${t.carteGrise || '-'}</span></div>
+              <div class="flex justify-between"><span>Châssis (VIN) :</span> <span class="font-mono">${t.chassis || '-'}</span></div>
+              <div class="flex justify-between"><span>Assurance :</span> <span class="font-semibold ${t.insuranceDate ? 'text-emerald-600' : 'text-gray-400'}">${t.insuranceDate || 'Non renseignée'}</span></div>
+            </div>
+          </div>
+        `;
+      });
+
+      // Render Revenue Table
+      const revTbody = document.getElementById('revenueTableBody');
+      revTbody.innerHTML = '';
+      appData.transactions.filter(tx => tx.type === 'REVENUE').sort((a,b) => b.datetime.localeCompare(a.datetime)).forEach(tx => {
+        const truck = appData.trucks.find(t => t.id === tx.truckId);
+        revTbody.innerHTML += `
+          <tr>
+            <td class="p-3 font-mono">${formatDateTime(tx.datetime)}</td>
+            <td class="p-3 font-bold">${truck ? truck.name + ' (' + truck.immat + ')' : 'Inconnu'}</td>
+            <td class="p-3"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-semibold">${tx.category}</span></td>
+            <td class="p-3">${tx.label}</td>
+            <td class="p-3 font-bold text-emerald-600">+${formatFCFA(tx.amount)}</td>
+            ${isAdminMode ? `
+              <td class="p-3 text-right no-print">
+                <button onclick="openEditTxModal('${tx.id}')" class="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg" title="Modifier">
+                  <i data-lucide="pencil" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteTx('${tx.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </td>
+            ` : '<td class="p-3 text-right no-print"></td>'}
+          </tr>
+        `;
+      });
+
+      // Render Expense Table
+      const expTbody = document.getElementById('expenseTableBody');
+      expTbody.innerHTML = '';
+      appData.transactions.filter(tx => tx.type === 'EXPENSE').sort((a,b) => b.datetime.localeCompare(a.datetime)).forEach(tx => {
+        const truck = appData.trucks.find(t => t.id === tx.truckId);
+        expTbody.innerHTML += `
+          <tr>
+            <td class="p-3 font-mono">${formatDateTime(tx.datetime)}</td>
+            <td class="p-3 font-bold">${truck ? truck.name + ' (' + truck.immat + ')' : 'Inconnu'}</td>
+            <td class="p-3"><span class="px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs font-semibold">${tx.category}</span></td>
+            <td class="p-3">${tx.label}</td>
+            <td class="p-3 font-bold text-red-600">-${formatFCFA(tx.amount)}</td>
+            ${isAdminMode ? `
+              <td class="p-3 text-right no-print">
+                <button onclick="openEditTxModal('${tx.id}')" class="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg" title="Modifier">
+                  <i data-lucide="pencil" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteTx('${tx.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </td>
+            ` : '<td class="p-3 text-right no-print"></td>'}
+          </tr>
+        `;
+      });
+
+      // Render Route Table
+      const rtTbody = document.getElementById('routeTableBody');
+      rtTbody.innerHTML = '';
+      appData.routes.sort((a,b) => b.datetime.localeCompare(a.datetime)).forEach(r => {
+        const truck = appData.trucks.find(t => t.id === r.truckId);
+        rtTbody.innerHTML += `
+          <tr>
+            <td class="p-3 font-mono">${formatDateTime(r.datetime)}</td>
+            <td class="p-3 font-bold">${truck ? truck.name + ' (' + truck.driver + ')' : 'Inconnu'}</td>
+            <td class="p-3 font-semibold text-amber-600">${r.start}</td>
+            <td class="p-3 font-semibold text-emerald-600">${r.end}</td>
+            <td class="p-3">${r.notes}</td>
+            ${isAdminMode ? `
+              <td class="p-3 text-right no-print">
+                <button onclick="openEditRouteModal('${r.id}')" class="text-brand-600 hover:bg-brand-50 p-1.5 rounded-lg" title="Modifier">
+                  <i data-lucide="pencil" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteRoute('${r.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </td>
+            ` : '<td class="p-3 text-right no-print"></td>'}
+          </tr>
+        `;
+      });
+
+      lucide.createIcons();
+    }
+  </script>
+
+
+  <!-- ================================================================
+       TBZ ADDITIVE FEATURES LAYER
+       This block is additive: it does not replace the existing data model,
+       menus, transaction categories, security code, or existing functions.
+       ================================================================ -->
+  <style>
+    .tbz-progress-track{height:10px;border-radius:9999px;background:#e5e7eb;overflow:hidden}
+    .dark .tbz-progress-track{background:#374151}
+    .tbz-progress-fill{height:100%;border-radius:9999px;background:#0284c7;transition:width .25s ease}
+    .tbz-report-card{break-inside:avoid;page-break-inside:avoid;border:1px solid #d1d5db;border-radius:10px;padding:12px;margin:0 0 14px}
+    .tbz-report-id{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;font-size:11px;margin-bottom:10px}
+    .tbz-search-highlight{font-weight:700}
+    @media print{.tbz-dashboard-only{display:none!important}.tbz-report-card{border:1px solid #aaa}.tbz-progress-fill{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+  </style>
+  <script>
+  (function(){
+    'use strict';
+
+    function esc(v){
+      return String(v ?? '').replace(/[&<>"']/g, function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});
+    }
+    function truckById(id){ return (appData.trucks || []).find(function(t){return t.id===id;}); }
+    function pct(rev,cost){ return cost>0 ? Math.min(100,Math.max(0,(rev/cost)*100)) : (rev>0?100:0); }
+    function truckIdentity(t){
+      return '<div class="tbz-report-id">'
+        + '<div><b>Véhicule :</b> '+esc(t && t.name || '-')+'</div>'
+        + '<div><b>Chauffeur :</b> '+esc(t && t.driver || '-')+'</div>'
+        + '<div><b>Immatriculation :</b> '+esc(t && t.immat || '-')+'</div>'
+        + '<div><b>Carte grise :</b> '+esc(t && t.carteGrise || '-')+'</div>'
+        + '<div><b>Assurance :</b> '+esc(t && t.insuranceDate ? t.insuranceDate : '-')+'</div>'
+        + '</div>';
+    }
+    function progressHtml(t,rev){
+      var p=pct(rev,Number(t && t.cost)||0);
+      return '<div style="margin:7px 0 10px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span><b>Progression des versements</b></span><span>'+p.toFixed(1)+'%</span></div><div class="tbz-progress-track"><div class="tbz-progress-fill" style="width:'+p+'%"></div></div></div>';
+    }
+    function txTotals(txs,type,cat){
+      return txs.filter(function(x){return x.type===type && (!cat || x.category===cat);}).reduce(function(a,b){return a+(Number(b.amount)||0);},0);
+    }
+
+    function addDashboardPanel(){
+      var dash=document.getElementById('view-dashboard');
+      if(!dash || document.getElementById('tbzDashboardDetails')) return;
+      var panel=document.createElement('div');
+      panel.id='tbzDashboardDetails';
+      panel.className='bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4 tbz-dashboard-only';
+      panel.innerHTML='<div class="flex justify-between items-center"><h2 class="font-bold text-base flex items-center gap-2"><i data-lucide="trending-up" class="w-5 h-5 text-brand-500"></i> Situation détaillée par camion</h2><span id="tbzDashGlobal" class="text-xs font-bold"></span></div><div id="tbzDashCards" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>';
+      dash.appendChild(panel);
+      if(window.lucide) lucide.createIcons();
+    }
+
+    function renderDashboardDetails(){
+      addDashboardPanel();
+      var box=document.getElementById('tbzDashCards'); if(!box) return;
+      var globalRev=0,globalExp=0,globalDebt=0,globalNet=0;
+      box.innerHTML='';
+      (appData.trucks||[]).forEach(function(t){
+        var tx=(appData.transactions||[]).filter(function(x){return x.truckId===t.id;});
+        var rev=txTotals(tx,'REVENUE'), exp=txTotals(tx,'EXPENSE');
+        var debt=Math.max(0,(Number(t.cost)||0)-rev), raw=Math.max(0,rev-(Number(t.cost)||0)), net=raw-exp;
+        globalRev+=rev;globalExp+=exp;globalDebt+=debt;globalNet+=net;
+        var p=pct(rev,Number(t.cost)||0);
+        box.innerHTML += '<div class="border dark:border-gray-700 rounded-xl p-4 space-y-3">'
+          +'<div><div class="font-bold">'+esc(t.name||'-')+'</div><div class="text-xs text-gray-500">Chauffeur: '+esc(t.driver||'-')+' · '+esc(t.immat||'-')+'</div></div>'
+          +progressHtml(t,rev)
+          +'<div class="grid grid-cols-2 gap-2 text-xs">'
+          +'<div class="p-2 rounded bg-emerald-50 dark:bg-gray-700"><span class="block text-gray-500">Versements</span><b class="text-emerald-600">'+formatFCFA(rev)+'</b></div>'
+          +'<div class="p-2 rounded bg-red-50 dark:bg-gray-700"><span class="block text-gray-500">Dépenses</span><b class="text-red-600">'+formatFCFA(exp)+'</b></div>'
+          +'<div class="p-2 rounded bg-amber-50 dark:bg-gray-700"><span class="block text-gray-500">Dette restante</span><b class="text-amber-600">'+formatFCFA(debt)+'</b></div>'
+          +'<div class="p-2 rounded bg-indigo-50 dark:bg-gray-700"><span class="block text-gray-500">Gain net</span><b class="'+(net>=0?'text-indigo-600':'text-red-500')+'">'+formatFCFA(net)+'</b></div>'
+          +'</div></div>';
+      });
+      var g=document.getElementById('tbzDashGlobal');
+      if(g) g.textContent='Global : Versements '+formatFCFA(globalRev)+' · Dépenses '+formatFCFA(globalExp)+' · Dette '+formatFCFA(globalDebt)+' · Net '+formatFCFA(globalNet);
+      if(window.lucide) lucide.createIcons();
+    }
+
+    function addGlobalSearch(){
+      if(document.getElementById('tbzGlobalSearch')) return;
+      var sidebar=document.getElementById('sidebar'); if(!sidebar) return;
+      var host=sidebar.querySelector('.p-4'); if(!host) return;
+      var box=document.createElement('div'); box.className='px-2 -mt-2 mb-2';
+      box.innerHTML='<label class="block text-[11px] font-bold uppercase text-gray-400 dark:text-gray-500 mb-2">Recherche</label><div class="relative"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"></i><input id="tbzGlobalSearch" type="search" placeholder="Camion, chauffeur, catégorie..." class="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-xs"></div><div id="tbzSearchResults" class="hidden mt-2 max-h-72 overflow-y-auto rounded-lg border dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"></div>';
+      host.insertBefore(box,host.firstElementChild);
+      var input=box.querySelector('#tbzGlobalSearch');
+      input.addEventListener('input',renderSearchResults);
+      if(window.lucide) lucide.createIcons();
+    }
+    function renderSearchResults(){
+      var input=document.getElementById('tbzGlobalSearch'), out=document.getElementById('tbzSearchResults'); if(!input||!out) return;
+      var q=input.value.trim().toLowerCase();
+      if(!q){out.classList.add('hidden');out.innerHTML='';return;}
+      var matches=[];
+      (appData.trucks||[]).forEach(function(t){
+        var hay=[t.name,t.immat,t.driver,t.carteGrise,t.chassis,t.insuranceDate].join(' ').toLowerCase();
+        if(hay.indexOf(q)>=0) matches.push({kind:'Camion',label:(t.name||'-')+' · '+(t.immat||'-'),detail:'Chauffeur: '+(t.driver||'-')});
+      });
+      (appData.transactions||[]).forEach(function(x){
+        var t=truckById(x.truckId); var hay=[x.category,x.label,x.type,t&&t.name,t&&t.immat,t&&t.driver].join(' ').toLowerCase();
+        if(hay.indexOf(q)>=0) matches.push({kind:x.type==='REVENUE'?'Versement':'Dépense',label:(t?t.name:'Camion inconnu')+' · '+(x.category||'-'),detail:(x.label||'-')+' · '+formatFCFA(Number(x.amount)||0)});
+      });
+      if(!matches.length){out.innerHTML='<div class="p-3 text-xs text-gray-500">Aucun résultat.</div>';out.classList.remove('hidden');return;}
+      var totalRev=0,totalExp=0;
+      (appData.transactions||[]).forEach(function(x){
+        var t=truckById(x.truckId); var hay=[x.category,x.label,x.type,t&&t.name,t&&t.immat,t&&t.driver].join(' ').toLowerCase();
+        if(hay.indexOf(q)>=0){if(x.type==='REVENUE') totalRev+=Number(x.amount)||0; else totalExp+=Number(x.amount)||0;}
+      });
+      out.innerHTML='<div class="p-2 border-b dark:border-gray-700 text-[11px] font-bold">'+matches.length+' résultat(s) · Versements '+formatFCFA(totalRev)+' · Dépenses '+formatFCFA(totalExp)+'</div>'
+        +matches.slice(0,80).map(function(m){return '<div class="p-2 border-b last:border-b-0 dark:border-gray-700 text-xs"><div class="font-semibold">'+esc(m.kind)+' — '+esc(m.label)+'</div><div class="text-gray-500">'+esc(m.detail)+'</div></div>';}).join('');
+      out.classList.remove('hidden');
+    }
+
+    function setupReportCategoryFilter(){
+      var sel=document.getElementById('reportCategorySelect'); if(!sel || sel.dataset.tbzReady==='1') return;
+      sel.dataset.tbzReady='1';
+      var base=Array.from(sel.options).map(function(o){return {v:o.value,t:o.text};});
+      sel.innerHTML='';
+      base.forEach(function(o){var op=document.createElement('option');op.value=o.v;op.textContent=o.t;sel.appendChild(op);});
+      var rg=document.createElement('optgroup'); rg.label='Versements — par catégorie';
+      REVENUE_CATEGORIES.forEach(function(c){var op=document.createElement('option');op.value='REVENUE_CAT:'+c;op.textContent='💚 '+c;rg.appendChild(op);}); sel.appendChild(rg);
+      var eg=document.createElement('optgroup'); eg.label='Dépenses — par catégorie';
+      EXPENSE_CATEGORIES.forEach(function(c){var op=document.createElement('option');op.value='EXPENSE_CAT:'+c;op.textContent='🔴 '+c;eg.appendChild(op);}); sel.appendChild(eg);
+    }
+
+    // Replacement report generator, called by the existing print button.
+    window.generateAndPrintReport=function(){
+      setupReportCategoryFilter();
+      var selected=document.getElementById('reportCategorySelect').value;
+      var truckFilter=document.getElementById('reportTruckFilter').value;
+      var startDt=document.getElementById('reportStartDt').value;
+      var endDt=document.getElementById('reportEndDt').value;
+      var hidePrices=document.getElementById('reportHidePrices').checked;
+      var container=document.getElementById('previewContent'), title=document.getElementById('previewTitle');
+      var selectedTrucks=truckFilter==='ALL'?(appData.trucks||[]):(appData.trucks||[]).filter(function(t){return t.id===truckFilter;});
+      var category=''; var mode=selected;
+      if(selected.indexOf('REVENUE_CAT:')===0){category=selected.slice(13);mode='REVENUE_CAT';}
+      if(selected.indexOf('EXPENSE_CAT:')===0){category=selected.slice(12);mode='EXPENSE_CAT';}
+      var truckNameStr=truckFilter==='ALL'?'Toute la flotte':(selectedTrucks[0]?selectedTrucks[0].name+' ('+selectedTrucks[0].immat+')':'');
+      var periodStr=(startDt&&endDt)?'Du '+formatDateTime(startDt)+' au '+formatDateTime(endDt):'Historique complet';
+      document.getElementById('printReportPeriod').textContent=periodStr;
+      document.getElementById('printReportTruck').textContent='Filtre : '+truckNameStr;
+      document.querySelector('#printReportTitle').textContent='NGM & TBZ LOGISTIQUE';
+      var banner=document.querySelector('.print-only h1'); if(banner) banner.textContent='NGM & TBZ LOGISTIQUE';
+      var txs=(appData.transactions||[]).filter(function(tx){return (truckFilter==='ALL'||tx.truckId===truckFilter)&&(!startDt||tx.datetime>=startDt)&&(!endDt||tx.datetime<=endDt);});
+      var routes=(appData.routes||[]).filter(function(r){return (truckFilter==='ALL'||r.truckId===truckFilter)&&(!startDt||r.datetime>=startDt)&&(!endDt||r.datetime<=endDt);});
+      var html=''; var grandRev=0,grandExp=0;
+      function sectionForTruck(t,kind,cat){
+        var list=txs.filter(function(x){return x.truckId===t.id && x.type===kind && (!cat||x.category===cat);});
+        var total=list.reduce(function(a,b){return a+(Number(b.amount)||0);},0);
+        var rows=list.map(function(x){return '<tr><td class="p-2">'+esc(formatDateTime(x.datetime))+'</td><td class="p-2">'+esc(x.category)+'</td><td class="p-2">'+esc(x.label)+'</td><td class="p-2 font-bold">'+esc(formatFCFA(Number(x.amount)||0))+'</td></tr>';}).join('');
+        return '<div class="tbz-report-card">'+truckIdentity(t)+progressHtml(t,txTotals(txs.filter(function(x){return x.truckId===t.id;}),'REVENUE'))+'<h4 style="font-weight:700;margin:4px 0">'+(kind==='REVENUE'?'Versements':'Dépenses')+(cat?' — '+esc(cat):'')+'</h4>'
+          +'<table class="w-full text-left text-xs border-collapse"><thead><tr><th class="p-2">Date</th><th class="p-2">Catégorie</th><th class="p-2">Motif</th><th class="p-2">Montant</th></tr></thead><tbody>'+ (rows||'<tr><td colspan="4" class="p-2 italic">Aucune opération pour ce filtre.</td></tr>')+'</tbody></table>'
+          +'<div class="mt-2 text-right font-bold">Total '+(kind==='REVENUE'?'Versements':'Dépenses')+' : '+formatFCFA(total)+'</div></div>';
+      }
+      if(mode==='GLOBAL'){
+        title.textContent="RAPPORT GLOBAL D'EXPLOITATION"; document.getElementById('printReportTitle').textContent='RAPPORT GLOBAL & BILAN D’AMORTISSEMENT';
+        selectedTrucks.forEach(function(t){
+          var rev=txTotals(txs.filter(function(x){return x.truckId===t.id;}),'REVENUE'), exp=txTotals(txs.filter(function(x){return x.truckId===t.id;}),'EXPENSE');
+          var debt=Math.max(0,(Number(t.cost)||0)-rev), raw=Math.max(0,rev-(Number(t.cost)||0)), net=raw-exp;
+          grandRev+=rev;grandExp+=exp;
+          html+='<div class="tbz-report-card">'+truckIdentity(t)+(!hidePrices?'<div><b>Prix d’achat :</b> '+formatFCFA(Number(t.cost)||0)+'</div>':'')+progressHtml(t,rev)+'<div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">'
+            +'<div><b>Versements</b><br>'+formatFCFA(rev)+'</div><div><b>Dépenses</b><br>'+formatFCFA(exp)+'</div><div><b>Dette restante</b><br>'+formatFCFA(debt)+'</div><div><b>Gain net</b><br>'+formatFCFA(net)+'</div></div></div>';
+        });
+        html+='<div class="mt-4 p-4 border-2 rounded-lg font-bold"><div>TOTAL GÉNÉRAL – TOUS LES CAMIONS</div><div>Versements : '+formatFCFA(grandRev)+' · Dépenses : '+formatFCFA(grandExp)+'</div></div>';
+      } else if(mode==='REVENUE'||mode==='EXPENSE'||mode==='REVENUE_CAT'||mode==='EXPENSE_CAT'){
+        var kind=(mode==='REVENUE'||mode==='REVENUE_CAT')?'REVENUE':'EXPENSE';
+        title.textContent=(kind==='REVENUE'?'RAPPORT VERSEMENTS':'RAPPORT DÉPENSES')+(category?' — '+category:'');
+        document.getElementById('printReportTitle').textContent=(kind==='REVENUE'?'RAPPORT VERSEMENTS / RECETTES':'RAPPORT DÉPENSES')+(category?' — '+category:'');
+        selectedTrucks.forEach(function(t){
+          var list=txs.filter(function(x){return x.truckId===t.id&&x.type===kind&&(!category||x.category===category);});
+          var total=list.reduce(function(a,b){return a+(Number(b.amount)||0);},0); grandRev+=kind==='REVENUE'?total:0;grandExp+=kind==='EXPENSE'?total:0;
+          html+=sectionForTruck(t,kind,category);
+        });
+        html+='<div class="mt-4 p-4 border-2 rounded-lg font-bold"><div>TOTAL GÉNÉRAL – TOUS LES CAMIONS</div><div>'+(kind==='REVENUE'?'Total Versements : '+formatFCFA(grandRev):'Total Dépenses : '+formatFCFA(grandExp))+'</div></div>';
+      } else if(mode==='ROUTE'){
+        title.textContent='RAPPORT SPÉCIFIQUE : TRAJETS'; document.getElementById('printReportTitle').textContent='RAPPORT TRAJETS & ITINÉRAIRES';
+        selectedTrucks.forEach(function(t){
+          var list=routes.filter(function(r){return r.truckId===t.id;});
+          html+='<div class="tbz-report-card">'+truckIdentity(t)+'<table class="w-full text-left text-xs border-collapse"><thead><tr><th class="p-2">Date</th><th class="p-2">Départ</th><th class="p-2">Arrivée</th><th class="p-2">Note</th></tr></thead><tbody>'+(list.map(function(r){return '<tr><td class="p-2">'+esc(formatDateTime(r.datetime))+'</td><td class="p-2">'+esc(r.start)+'</td><td class="p-2">'+esc(r.end)+'</td><td class="p-2">'+esc(r.notes)+'</td></tr>';}).join('')||'<tr><td colspan="4" class="p-2 italic">Aucun trajet pour ce filtre.</td></tr>')+'</tbody></table><div class="mt-2 font-bold">Total trajets : '+list.length+'</div></div>';
+        });
+      }
+      container.innerHTML=html||'<p class="text-xs text-gray-500">Aucune donnée pour les critères sélectionnés.</p>';
+      if(window.lucide) lucide.createIcons();
+      window.print();
+    };
+
+    document.addEventListener('DOMContentLoaded',function(){
+      addGlobalSearch();
+      addDashboardPanel();
+      setupReportCategoryFilter();
+      renderDashboardDetails();
+      var originalSaveData=window.saveData;
+      if(typeof originalSaveData==='function' && !originalSaveData.__tbzWrapped){
+        var wrapped=function(){ originalSaveData(); renderDashboardDetails(); setupReportCategoryFilter(); };
+        wrapped.__tbzWrapped=true;
+        window.saveData=wrapped;
+      }
+      var reportSel=document.getElementById('reportCategorySelect');
+      if(reportSel) reportSel.addEventListener('change',setupReportCategoryFilter);
+    });
+  })();
+  </script>
+
+
+  <!-- INSTALLATION + SYNCHRONISATION MULTI-APPAREILS (ajout) -->
+  <script src="firebase-config.js"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    var had = !!navigator.serviceWorker.controller; navigator.serviceWorker.addEventListener('controllerchange', function () { if (had) location.reload(); });
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function(){}); });
+  }
+  (function () {
+    var URL_ = '';
+    try { URL_ = window.NGM_FIREBASE_URL || localStorage.getItem('NGM_FB_URL') || ''; } catch (e) {}
+    URL_ = URL_.trim().replace(/\/+$/, '');
+    if (!URL_) return;
+    var ENDPOINT = URL_ + '/ngm_fleet.json';
+    var PARTS = ['meta', 'trucks', 'transactions', 'routes'];
+    // remote = dernier état reçu du serveur ; base = dernier état connu comme synchronisé
+    var remote = {}, base = {}, loaded = false, applying = false, timer = null, pushing = false, es = null;
+
+    function getPart(n) {
+      if (n === 'meta') return JSON.stringify({ securityPin: appData.securityPin, hideInitialCosts: appData.hideInitialCosts, entryPin: appData.entryPin, clientAmounts: appData.clientAmounts, docs: appData.docs });
+      return JSON.stringify(appData[n] || []);
+    }
+    function setPart(n, j) {
+      var v = JSON.parse(j);
+      if (n === 'meta') { appData.securityPin = v.securityPin; appData.hideInitialCosts = v.hideInitialCosts; appData.entryPin = v.entryPin; appData.clientAmounts = v.clientAmounts; appData.docs = v.docs; }
+      else appData[n] = v;
+    }
+    function isDirty(n) { return getPart(n) !== base[n]; }
+    function anyDirty() { return PARTS.some(isDirty); }
+
+    function applyRemote() {
+      var changed = false;
+      PARTS.forEach(function (n) {
+        var j = remote[n];
+        if (typeof j !== 'string') return;
+        if (isDirty(n)) return;                 // modification locale en attente : elle est prioritaire
+        if (j !== getPart(n)) { try { setPart(n, j); changed = true; } catch (e) {} }
+        base[n] = j;
+      });
+      if (changed) { applying = true; try { window.saveData(); } finally { applying = false; } }
+      if (anyDirty()) schedule();
+    }
+    function schedule() { clearTimeout(timer); timer = setTimeout(push, 400); }
+    function push() {
+      if (!loaded) return;                      // on attend d'avoir lu le serveur avant d'écrire
+      if (pushing) { schedule(); return; }
+      var body = {}, any = false;
+      PARTS.forEach(function (n) { if (isDirty(n)) { body[n] = getPart(n); any = true; } });
+      if (!any) return;
+      pushing = true;
+      fetch(ENDPOINT, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) {
+          if (!r.ok) throw new Error(r.status);
+          Object.keys(body).forEach(function (n) { base[n] = body[n]; remote[n] = body[n]; });
+        })
+        .catch(function () { setTimeout(schedule, 15000); })
+        .then(function () { pushing = false; if (anyDirty()) schedule(); });
+    }
+    function onEvent(type, raw) {
+      var m; try { m = JSON.parse(raw); } catch (e) { return; }
+      if (!m) return;
+      var p = m.path || '/', d = m.data;
+      if (p === '/') {
+        if (type === 'put') remote = {};
+        if (d && typeof d === 'object') Object.keys(d).forEach(function (k) { remote[k] = d[k]; });
+        if (type === 'put' && !loaded) {
+          loaded = true;
+          if (!d) { PARTS.forEach(function (n) { base[n] = undefined; }); schedule(); return; } // base vide : on y envoie les données de cet appareil
+        }
+      } else {
+        var k = p.split('/')[1];
+        if (type === 'put') { if (d === null) delete remote[k]; else remote[k] = d; }
+      }
+      applyRemote();
+    }
+    function connect() {
+      if (es) { try { es.close(); } catch (e) {} }
+      es = new EventSource(ENDPOINT);
+      es.addEventListener('put', function (e) { onEvent('put', e.data); });
+      es.addEventListener('patch', function (e) { onEvent('patch', e.data); });
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      PARTS.forEach(function (n) { base[n] = getPart(n); });
+      var orig = window.saveData;
+      if (typeof orig === 'function') {
+        window.saveData = function () { orig.apply(this, arguments); if (!applying) schedule(); };
+      }
+      connect();
+    });
+    window.addEventListener('online', function () { connect(); });
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && (!es || es.readyState === 2)) connect();
+    });
+  })();
+  </script>
+
+  <!-- AJOUTS : présence, code unique, analyse intelligente, graphiques, rapport à cocher -->
+  <script>
+  (function () {
+    var $ = function (i) { return document.getElementById(i); };
+    var U = ''; try { U = (window.NGM_FIREBASE_URL || localStorage.getItem('NGM_FB_URL') || '').trim().replace(/\/+$/, ''); } catch (e) {}
+    var CARD = 'bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-3';
+    var fm = function (n) { return typeof formatFCFA === 'function' ? formatFCFA(n) : n + ' FCFA'; };
+    var E_ = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"]/g, ''); };
+    var sel = 'ALL', tip = 'Touchez une barre pour voir le détail.', myName = '';
+
+    // 1) Deux codes : code d'entrée (demandé une fois par appareil) et code administrateur (demandé une fois)
+    window.showInitialAccess = function () {
+      var ep = appData.entryPin || '2025', em = $('entryPinModal');
+      try { if (localStorage.NGM_ENTRY === ep) { initialAccessGranted = true; isAdminMode = false; if (em) em.classList.add('hidden'); renderApp(); return; } } catch (e) {}
+      initialAccessGranted = false;
+      if (em) { em.classList.remove('hidden'); var i = $('entryPinInput'); if (i) { i.value = ''; setTimeout(function () { i.focus(); }, 50); } }
+    };
+    window.validateEntryPin = function () {
+      var i = $('entryPinInput'), t = appData.entryPin || '2025';
+      if (i.value !== t) { alert("Code d'entrée incorrect !"); i.value = ''; i.focus(); return; }
+      try { localStorage.NGM_ENTRY = t; } catch (e) {}
+      initialAccessGranted = true; isAdminMode = false;
+      $('entryPinModal').classList.add('hidden'); $('pinModal').classList.add('hidden'); renderApp();
+    };
+    window.validatePinAction = function () {
+      var m = $('pinModal'), v = $('confirmPinInput').value, entry = !initialAccessGranted;
+      var target = entry ? (appData.entryPin || '2025') : (appData.securityPin || '2026');
+      if (v !== target) { alert(entry ? "Code d'entrée incorrect !" : 'Code administrateur incorrect !'); return; }
+      var a = pendingPinAction; pendingPinAction = null; m.classList.add('hidden');
+      if (entry) { try { localStorage.NGM_ENTRY = target; } catch (e) {} }
+      var h = m.querySelector('h3'), p = m.querySelector('p'), c = m.querySelector('button[onclick="closePinModal()"]'), b = m.querySelector('button[onclick="validatePinAction()"]');
+      if (h) h.textContent = 'Code administrateur'; if (p) p.innerHTML = 'Saisissez le code administrateur.';
+      if (c) c.classList.remove('hidden'); if (b) b.textContent = 'Valider';
+      if (a) a();
+    };
+    window.ngmSaveEntry = function () {
+      var v = $('ngmEntryIn').value; if (!/^\d{4}$/.test(v)) { alert('Le code doit avoir 4 chiffres.'); return; }
+      appData.entryPin = v; try { localStorage.NGM_ENTRY = v; } catch (e) {} saveData(); $('ngmEntryIn').value = ''; alert("Code d'entrée enregistré. Les autres appareils le redemanderont.");
+    };
+    var tg = window.toggleAdminRole, wasAdm = false;
+    window.toggleAdminRole = function () {
+      if (isAdminMode) return tg();
+      if (!canAdminBtn()) { alert("Cet appareil n'est pas déverrouillé. Touchez 5 fois rapidement la barre bleue du haut, puis entrez le code administrateur."); return; }
+      if (!U || !initialAccessGranted || owner) return tg();
+      fetch(U + '/ngm_admin.json').then(function (r) { return r.json(); }).then(function (a) {
+        if (a && a.id && a.id !== pid && Date.now() - a.ts < 75000) { alert('⛔ ' + a.name + " est déjà connecté en administrateur. Un seul administrateur à la fois."); return; }
+        tg();
+      }).catch(function () { tg(); });
+    };
+    var rp = window.requirePin; // (après connexion admin, aucun code redemandé)
+    window.requirePin = function (cb) { if (isAdminMode) cb(); else rp(cb); };
+
+    // 2) Présence : qui est connecté
+    var pid = ''; try { pid = localStorage.NGM_ID || (localStorage.NGM_ID = 'u' + Math.random().toString(36).slice(2, 9)); } catch (e) {}
+    function beat() {
+      if (!U || !myName) return;
+      if (isAdminMode) fetch(U + '/ngm_admin.json', { method: 'PUT', body: JSON.stringify({ id: pid, name: myName, ts: Date.now() }) }).catch(function () {});
+      else if (wasAdm) fetch(U + '/ngm_admin.json', { method: 'PUT', body: 'null' }).catch(function () {});
+      var lt = 0; try { lt = +localStorage.NGM_LOGT || 0; } catch (e) {}
+      if (isAdminMode && !wasAdm && !owner && Date.now() - lt > 6e5) { try { localStorage.NGM_LOGT = Date.now(); } catch (e) {} fetch(U + '/ngm_log.json', { method: 'POST', body: JSON.stringify({ name: myName, role: 'client', ts: Date.now() }) }).catch(function () {}); }
+      wasAdm = isAdminMode;
+      fetch(U + '/ngm_presence/' + pid + '.json', { method: 'PUT', body: JSON.stringify({ name: myName, role: isAdminMode ? 'Administrateur' : 'Client', ts: Date.now() }) }).catch(function () {});
+    }
+    function ago(ms) { var m = Math.round(ms / 60000); return m < 1 ? "à l'instant" : m < 60 ? 'il y a ' + m + ' min' : m < 1440 ? 'il y a ' + Math.round(m / 60) + ' h' : 'il y a ' + Math.round(m / 1440) + ' j'; }
+    function who() {
+      var box = $('ngmWho'); if (!box) return;
+      if (!isAdminMode || !U) { box.innerHTML = ''; box.className = ''; return; }
+      Promise.all(['presence', 'banned', 'perms', 'log'].map(function (p) { return fetch(U + '/ngm_' + p + '.json' + (p === 'log' ? '?orderBy=%22$key%22&limitToLast=10' : '')).then(function (r) { return r.json(); }).then(function (j) { return j && !j.error ? j : {}; }).catch(function () { return {}; }); })).then(function (r) {
+        var d = r[0] || {}, ban = r[1] || {}, pms = r[2] || {}, now = Date.now();
+        var L = Object.keys(d).map(function (k) { var o = d[k]; o.k = k; return o; }).sort(function (a, b) { return b.ts - a.ts; });
+        box.className = CARD;
+        box.innerHTML = '<h3 class="font-bold text-sm">👥 Connectés (' + L.filter(function (x) { return now - x.ts < 75000 && !ban[x.k]; }).length + ' en ligne)</h3>' +
+          (L.length ? L.slice(0, 30).map(function (x) {
+            var on = now - x.ts < 75000, bn = !!ban[x.k], me = x.k === pid;
+            var btn = me ? '' : '<button onclick="ngmBan(\'' + x.k + '\',' + (bn ? 'false' : 'true') + ')" class="ml-2 px-2 py-0.5 rounded text-[11px] ' + (bn ? 'bg-emerald-600' : 'bg-red-600') + ' text-white">' + (bn ? 'Réintégrer' : 'Retirer') + '</button>';
+            var pm = pms[x.k] || {}, vis = function (id) { return !Array.isArray(pm.trucks) || pm.trucks.indexOf(id) > -1; };
+            var gear = (me || x.role === 'Administrateur') ? '' : '<button onclick="ngmOpen(\'' + x.k + '\')" class="ml-2 px-2 py-0.5 rounded text-[11px] bg-gray-500 text-white">Droits</button>';
+            var pan = openK === x.k && !me ? '<div class="p-2 mt-1 bg-gray-100 dark:bg-gray-700 rounded text-xs space-y-1"><label class="flex items-center gap-2"><input type="checkbox" class="pa" ' + (pm.amt ? 'checked' : '') + ' onchange="ngmPerm(\'' + x.k + '\')"> Voir les montants (versements et dépenses)</label><label class="flex items-center gap-2"><input type="checkbox" class="pb" ' + (pm.buy ? 'checked' : '') + ' onchange="ngmPerm(\'' + x.k + '\')"> Voir prix d\'achat et dette</label><label class="flex items-center gap-2"><input type="checkbox" class="pd" ' + (pm.admin ? 'checked' : '') + ' onchange="ngmPerm(\'' + x.k + '\')"> Voir le bouton « Mode administrateur »</label><div class="font-semibold pt-1">Véhicules visibles :</div>' + (appData.trucks || []).map(function (t) { return '<label class="flex items-center gap-2"><input type="checkbox" class="pt" value="' + t.id + '" ' + (vis(t.id) ? 'checked' : '') + ' onchange="ngmPerm(\'' + x.k + '\')"> ' + E_(t.name) + '</label>'; }).join('') + '</div>' : '';
+            return '<div><div class="flex justify-between items-center text-xs border-b dark:border-gray-700 pb-1"><span>' + (bn ? '⛔' : on ? '🟢' : '⚪') + ' ' + (x.role === 'Administrateur' ? '👑 ' : '') + '<b>' + E_(x.name) + '</b> · ' + E_(x.role) + (bn ? ' · suspendu' : '') + '</span><span class="text-gray-500 whitespace-nowrap">' + (on ? 'en ligne' : ago(now - x.ts)) + gear + btn + '</span></div>' + pan + '</div>';
+          }).join('') : '<p class="text-xs text-gray-500">Personne pour le moment.</p>') +
+          (function () {
+            var lg = Object.keys(r[3] || {}).map(function (k) { return r[3][k]; }).filter(function (e) { return now - e.ts < 864e5; }).sort(function (a, b) { return b.ts - a.ts; });
+            if (!lg.length) return '';
+            return '<details class="text-[11px] text-amber-600" ' + (logOpen ? 'open' : '') + ' ontoggle="ngmLogT(this.open)"><summary class="cursor-pointer">👑 ' + lg.length + ' passage(s) de client en mode administrateur (24 h) · dernier : ' + E_(lg[0].name) + ', ' + ago(now - lg[0].ts) + '</summary>' + lg.slice(0, 10).map(function (e) { return '<p>• ' + E_(e.name) + ' · ' + ago(now - e.ts) + '</p>'; }).join('') + '<button onclick="ngmClearLog()" class="mt-1 px-2 py-0.5 rounded bg-gray-500 text-white">Effacer le journal</button></details>';
+          })();
+      }).catch(function () { box.className = CARD; box.innerHTML = '<p class="text-xs text-red-500">Liste des connectés indisponible (réseau). Réessai automatique.</p>'; });
+    }
+    window.ngmBan = function (k, on) {
+      if (on && !confirm('Retirer cet utilisateur ? Il sera déconnecté immédiatement.')) return;
+      fetch(U + '/ngm_banned/' + k + '.json', { method: 'PUT', body: on ? JSON.stringify({ ts: Date.now() }) : 'null' }).then(who).catch(function () {});
+    };
+    var banned = false, perm = null, openK = null;
+    var TK = function (v) { var n = Date.parse(String(v).replace(' ', 'T')); return isNaN(n) ? 0 : n; }, SORT = 'dateDesc';
+    try { SORT = localStorage.NGM_SORT || 'dateDesc'; } catch (e) {}
+    function sortLists() {
+      var tn = function (id) { var k = (appData.trucks || []).filter(function (t) { return t.id === id; })[0]; return k ? k.name : ''; };
+      [['revenueTableBody', 'openEditTxModal', 'transactions'], ['expenseTableBody', 'openEditTxModal', 'transactions'], ['routeTableBody', 'openEditRouteModal', 'routes']].forEach(function (c) {
+        var tb = $(c[0]); if (!tb) return; var arr = appData[c[2]] || [];
+        var rows = Array.prototype.map.call(tb.rows, function (tr) { var b = tr.querySelector('button[onclick^="' + c[1] + '"]'), m = b && /'([^']+)'/.exec(b.getAttribute('onclick')); return { tr: tr, t: m && arr.filter(function (x) { return x.id === m[1]; })[0] }; });
+        if (!rows.length || rows.some(function (r) { return !r.t; })) return;
+        rows.sort(function (a, b) {
+          var x = a.t, y = b.t;
+          if (SORT === 'dateAsc') return TK(x.datetime) - TK(y.datetime);
+          if (SORT === 'amtDesc') return (y.amount || 0) - (x.amount || 0);
+          if (SORT === 'amtAsc') return (x.amount || 0) - (y.amount || 0);
+          if (SORT === 'truck') return tn(x.truckId).localeCompare(tn(y.truckId)) || TK(y.datetime) - TK(x.datetime);
+          return TK(y.datetime) - TK(x.datetime);
+        });
+        rows.forEach(function (r) { tb.appendChild(r.tr); });
+      });
+    }
+    window.ngmSort = function (v) {
+      SORT = v; try { localStorage.NGM_SORT = v; } catch (e) {}
+      Array.prototype.forEach.call(document.querySelectorAll('.ngm-sort'), function (x) { x.value = v; }); sortLists();
+    };
+    var permLoaded = false;
+    function canAmt() { if (!isAdminMode && U && !permLoaded) return false; return isAdminMode || (perm && perm.amt !== undefined ? !!perm.amt : !!appData.clientAmounts); }
+    function canBuy() { if (!isAdminMode && U && !permLoaded) return false; return isAdminMode || !!(perm && perm.buy === true); }
+    var owner = false; try { if (/[?&]owner=1/.test(location.search)) localStorage.NGM_OWNER = '1'; owner = localStorage.NGM_OWNER === '1'; } catch (e) {}
+    function canAdminBtn() { return isAdminMode || owner || !!(perm && perm.admin === true); }
+    function viewFor() {
+      if (isAdminMode) return null;
+      var o = { hideInitialCosts: canBuy() ? appData.hideInitialCosts : true };
+      if (perm && Array.isArray(perm.trucks)) {
+        var ids = perm.trucks, ok = function (x) { return ids.indexOf(x.truckId) > -1; };
+        o.trucks = (appData.trucks || []).filter(function (t) { return ids.indexOf(t.id) > -1; }); o.transactions = (appData.transactions || []).filter(ok); o.routes = (appData.routes || []).filter(ok);
+      }
+      return Object.assign({}, appData, o);
+    }
+    function watchPerm() {
+      var es = new EventSource(U + '/ngm_perms/' + pid + '.json');
+      es.addEventListener('put', function (e) { try { perm = JSON.parse(e.data).data || null; } catch (x) { return; } permLoaded = true; window.saveData(); });
+    }
+    var logOpen = false;
+    window.ngmLogT = function (o) { logOpen = o; };
+    window.ngmClearLog = function () { fetch(U + '/ngm_log.json', { method: 'PUT', body: 'null' }).then(who).catch(function () {}); };
+    window.ngmOpen = function (k) { openK = openK === k ? null : k; who(); };
+    window.ngmPerm = function (k) {
+      var all = (appData.trucks || []).length, ids = Array.prototype.map.call(document.querySelectorAll('#ngmWho .pt:checked'), function (c) { return c.value; });
+      var o = { amt: !!document.querySelector('#ngmWho .pa').checked, buy: !!document.querySelector('#ngmWho .pb').checked, admin: !!document.querySelector('#ngmWho .pd').checked }; if (ids.length < all) o.trucks = ids;
+      fetch(U + '/ngm_perms/' + k + '.json', { method: 'PUT', body: JSON.stringify(o) }).then(who).catch(function () {});
+    };
+    function watchBan() {
+      var es = new EventSource(U + '/ngm_banned/' + pid + '.json');
+      es.addEventListener('put', function (e) {
+        var d; try { d = JSON.parse(e.data).data; } catch (x) { return; }
+        var ov = $('ngmBanned');
+        if (d) {
+          banned = true; try { localStorage.removeItem('NGM_ENTRY'); } catch (x) {}
+          if (!ov) { ov = document.createElement('div'); ov.id = 'ngmBanned'; ov.className = 'fixed inset-0 z-[500] bg-gray-900 text-white flex items-center justify-center p-8 text-center'; ov.innerHTML = '<div><div class="text-5xl mb-4">⛔</div><h2 class="text-xl font-bold mb-2">Accès suspendu</h2><p class="text-sm text-gray-300">L\'administrateur a retiré votre accès à cette application.</p></div>'; document.body.appendChild(ov); }
+        } else if (banned) { location.reload(); }
+      });
+    }
+    // Montants du tableau de bord masqués pour les clients (sauf si l'administrateur les autorise)
+    var RE = /-?\d[\d\s\u00a0\u202f.,]*\s?FCFA/g;
+    function mask() {
+      var v = $('view-dashboard'); if (!v) return;
+      var m = !canAmt(), w = document.createTreeWalker(v, NodeFilter.SHOW_TEXT), n;
+      var ns = $('nav-security'); if (ns) ns.style.display = isAdminMode ? '' : 'none';
+      var vs = $('view-security'); if (vs && !isAdminMode) vs.classList.add('hidden');
+      var dd = $('dashTotalDebt'); if (dd && !canBuy()) { if (dd.textContent.indexOf('•') < 0) dd.textContent = '•••••• FCFA'; }
+      var cb2 = $('costHideText'); if (cb2 && cb2.parentNode && cb2.parentNode.style) cb2.parentNode.style.display = canBuy() ? '' : 'none';
+      var lb = $('lockBtn'); if (lb) lb.style.display = canAdminBtn() ? '' : 'none';
+      while ((n = w.nextNode())) {
+        if (n.parentNode.closest && n.parentNode.closest('#ngmExtra,#ngmWho')) continue;
+        var o = n.__o !== undefined ? n.__o : n.nodeValue;
+        if (m) { RE.lastIndex = 0; if (RE.test(o)) { n.__o = o; RE.lastIndex = 0; var t = o.replace(RE, '•••••• FCFA'); if (n.nodeValue !== t) n.nodeValue = t; } }
+        else if (n.__o !== undefined && n.nodeValue !== n.__o) { n.nodeValue = n.__o; }
+      }
+    }
+    function dupMark() {
+      var tx = appData.transactions || [], key = function (t) { return [t.truckId, t.type, +t.amount, String(t.datetime).slice(0, 10)].join('|'); }, cnt = {};
+      tx.forEach(function (t) { cnt[key(t)] = (cnt[key(t)] || 0) + 1; });
+      document.querySelectorAll('button[onclick^="openEditTxModal"]').forEach(function (b) {
+        var m = /'([^']+)'/.exec(b.getAttribute('onclick')), tr = b.closest('tr'); if (!m || !tr) return;
+        var t = tx.filter(function (x) { return x.id === m[1]; })[0]; if (!t) return;
+        var d = cnt[key(t)] > 1, bd = tr.querySelector('.ngm-dupb'); tr.classList.toggle('ngm-dup', d);
+        if (d && !bd) { var sp = document.createElement('span'); sp.className = 'ngm-dupb ml-1 text-red-600 text-[10px] font-bold'; sp.textContent = '⚠️ Doublon'; tr.cells[0].appendChild(sp); } else if (!d && bd) bd.remove();
+      });
+    }
+    window.ngmAmt = function (c) { appData.clientAmounts = !!c; saveData(); };
+
+    // 3) Analyse intelligente + graphiques
+    function calc() {
+      var R = 0, X = 0, cat = {}, mo = {};
+      (appData.transactions || []).forEach(function (t) {
+        if (sel !== 'ALL' && t.truckId !== sel) return;
+        var a = +t.amount || 0, m = String(t.datetime).slice(0, 7); mo[m] = mo[m] || [0, 0];
+        if (t.type === 'REVENUE') { R += a; mo[m][0] += a; } else { X += a; mo[m][1] += a; cat[t.category] = (cat[t.category] || 0) + a; }
+      });
+      return { R: R, X: X, cat: cat, mo: mo };
+    }
+    function pct(a, b) { return b ? Math.round((a - b) / b * 100) : null; }
+    function insights(c) {
+      var L = [], ks = Object.keys(c.mo).sort(), n = ks.length, last = ks[n - 1], prev = ks[n - 2];
+      L.push((c.R - c.X >= 0 ? '✅' : '🔴') + ' Résultat net : <b>' + fm(c.R - c.X) + '</b>' + (c.R ? ' (les dépenses représentent ' + Math.round(c.X / c.R * 100) + '% des versements)' : ''));
+      if (prev) {
+        var pr = pct(c.mo[last][0], c.mo[prev][0]), pe = pct(c.mo[last][1], c.mo[prev][1]);
+        if (pr !== null) L.push((pr >= 0 ? '📈' : '📉') + ' Versements ' + last + ' : ' + (pr >= 0 ? '+' : '') + pr + '% par rapport à ' + prev);
+        if (pe !== null) L.push((pe > 20 ? '⚠️' : '💡') + ' Dépenses ' + last + ' : ' + (pe >= 0 ? '+' : '') + pe + '% par rapport à ' + prev);
+      }
+      var top = Object.keys(c.cat).sort(function (a, b) { return c.cat[b] - c.cat[a]; })[0];
+      if (top) L.push('🔧 Poste le plus coûteux : <b>' + E_(top) + '</b> (' + fm(c.cat[top]) + ', ' + Math.round(c.cat[top] / c.X * 100) + '% des dépenses)');
+      (appData.trucks || []).filter(function (t) { return sel === 'ALL' || t.id === sel; }).forEach(function (t) {
+        var nm = E_(t.name), d = t.insuranceDate ? Math.ceil((new Date(t.insuranceDate) - new Date()) / 864e5) : null;
+        if (d === null || isNaN(d)) L.push('⚠️ ' + nm + ' : date d\'assurance non renseignée');
+        else if (d < 0) L.push('🔴 ' + nm + ' : assurance expirée depuis ' + (-d) + ' jour(s)');
+        else if (d <= 30) L.push('🟠 ' + nm + ' : assurance expire dans ' + d + ' jour(s)');
+        else L.push('✅ ' + nm + ' : assurance valide (' + d + ' jours)');
+        var dc = (appData.docs || {})[t.id] || {};
+        [['cg', 'Carte grise'], ['vt', 'Visite technique'], ['tx', 'Taxe / vignette']].forEach(function (f) {
+          if (!dc[f[0]]) return; var dl = Math.ceil((new Date(dc[f[0]]) - new Date()) / 864e5);
+          if (dl < 0) L.push('🔴 ' + nm + ' : ' + f[1] + ' expirée depuis ' + (-dl) + ' jour(s)'); else if (dl <= 30) L.push('🟠 ' + nm + ' : ' + f[1] + ' expire dans ' + dl + ' jour(s)');
+        });
+        if (isAdminMode && +t.cost > 0) {
+          var rev = 0; (appData.transactions || []).forEach(function (x) { if (x.truckId === t.id && x.type === 'REVENUE') rev += +x.amount || 0; });
+          L.push('🏦 ' + nm + ' : reste à amortir <b>' + fm(Math.max(0, t.cost - rev)) + '</b> (' + Math.min(100, Math.round(rev / t.cost * 100)) + '% remboursé)');
+        }
+      });
+      return L;
+    }
+    window.ngmTip = function (m, r, x) { tip = '📅 ' + m + ' — Versements : ' + fm(r) + ' · Dépenses : ' + fm(x) + ' · Net : ' + fm(r - x); var el = $('ngmTip'); if (el) el.textContent = tip; };
+    window.ngmSel = function (v) { sel = v; draw(); };
+    window.ngmDoc = function (id, f, v) { appData.docs = appData.docs || {}; (appData.docs[id] = appData.docs[id] || {})[f] = v; saveData(); };
+    function draw() {
+      var host = $('ngmExtra'); if (!host) return;
+      if (!canAmt()) { host.innerHTML = ''; return; }
+      var c = calc(), ks = Object.keys(c.mo).sort().slice(-6), mx = 1;
+      ks.forEach(function (k) { mx = Math.max(mx, c.mo[k][0], c.mo[k][1]); });
+      var bars = ks.map(function (k) {
+        var r = c.mo[k][0], x = c.mo[k][1];
+        return '<div class="flex-1 text-center cursor-pointer" onclick="ngmTip(\'' + k + '\',' + r + ',' + x + ')"><div class="flex items-end justify-center gap-1 h-28"><div class="w-3 bg-emerald-500 rounded-t" style="height:' + Math.max(2, r / mx * 100) + '%"></div><div class="w-3 bg-red-500 rounded-t" style="height:' + Math.max(2, x / mx * 100) + '%"></div></div><div class="text-[10px] text-gray-500 mt-1">' + k.slice(2) + '</div></div>';
+      }).join('');
+      var cats = Object.keys(c.cat).sort(function (a, b) { return c.cat[b] - c.cat[a]; }).map(function (k) {
+        return '<div class="text-xs"><div class="flex justify-between"><span>' + E_(k) + '</span><span>' + fm(c.cat[k]) + '</span></div><div class="h-2 rounded bg-gray-200 dark:bg-gray-700"><div class="h-2 rounded bg-amber-500" style="width:' + Math.round(c.cat[k] / c.X * 100) + '%"></div></div></div>';
+      }).join('');
+      var extra = '', DOC = [['cg', 'Carte grise'], ['vt', 'Visite technique'], ['tx', 'Taxe / vignette']], pal = ['#f59e0b', '#ef4444', '#6366f1', '#10b981', '#06b6d4', '#a855f7', '#84cc16'];
+      var cks = Object.keys(c.cat).sort(function (a, b) { return c.cat[b] - c.cat[a]; }), acc = 0;
+      if (cks.length && c.X > 0) {
+        var g = cks.map(function (k, i) { var p = c.cat[k] / c.X * 100, st = acc; acc += p; return pal[i % 7] + ' ' + st + '% ' + acc + '%'; }).join(',');
+        extra += '<div class="' + CARD + '"><h3 class="font-bold text-sm">🥧 Dépenses par poste</h3><div class="flex items-center gap-4"><div style="width:96px;height:96px;border-radius:50%;background:conic-gradient(' + g + ')"></div><div class="text-[11px] space-y-0.5">' + cks.map(function (k, i) { return '<div><span style="color:' + pal[i % 7] + '">■</span> ' + E_(k) + ' ' + Math.round(c.cat[k] / c.X * 100) + '%</div>'; }).join('') + '</div></div></div>';
+      }
+      if (sel === 'ALL' && (appData.trucks || []).length > 1) {
+        var rows = (appData.trucks || []).map(function (t) { var r = 0, x = 0; (appData.transactions || []).forEach(function (q) { if (q.truckId === t.id) { if (q.type === 'REVENUE') r += +q.amount || 0; else x += +q.amount || 0; } }); return { n: t.name, r: r, x: x }; });
+        var m2 = 1; rows.forEach(function (o) { m2 = Math.max(m2, o.r, o.x); });
+        extra += '<div class="' + CARD + '"><h3 class="font-bold text-sm">⚖️ Comparaison des camions</h3>' + rows.map(function (o) { return '<div class="text-xs"><div class="flex justify-between"><b>' + E_(o.n) + '</b><span>Net ' + fm(o.r - o.x) + '</span></div><div class="h-2 rounded bg-emerald-500" style="width:' + Math.max(2, o.r / m2 * 100) + '%"></div><div class="h-2 rounded bg-red-500 mt-0.5" style="width:' + Math.max(2, o.x / m2 * 100) + '%"></div></div>'; }).join('') + '</div>';
+      }
+      if (isAdminMode) {
+        extra += '<div class="' + CARD + '"><h3 class="font-bold text-sm">📄 Documents des véhicules</h3>' + (appData.trucks || []).map(function (t) {
+          var d = (appData.docs || {})[t.id] || {};
+          return '<div class="text-xs border-b dark:border-gray-700 pb-2"><b>' + E_(t.name) + '</b>' + DOC.map(function (f) { return '<div class="flex justify-between items-center mt-1"><span>' + f[1] + '</span><input type="date" value="' + (d[f[0]] || '') + '" onchange="ngmDoc(\'' + t.id + '\',\'' + f[0] + '\',this.value)" class="px-1 py-0.5 rounded border dark:border-gray-600 bg-white dark:bg-gray-700"></div>'; }).join('') + '</div>';
+        }).join('') + '</div>';
+      }
+      host.innerHTML = '<div class="' + CARD + '"><div class="flex justify-between items-center gap-2"><h3 class="font-bold text-sm">🤖 Analyse intelligente</h3><select onchange="ngmSel(this.value)" class="text-xs px-2 py-1 rounded border dark:border-gray-600 bg-white dark:bg-gray-700"><option value="ALL">Toute la flotte</option>' +
+        (appData.trucks || []).map(function (t) { return '<option value="' + t.id + '"' + (t.id === sel ? ' selected' : '') + '>' + E_(t.name) + '</option>'; }).join('') + '</select></div>' +
+        insights(c).map(function (l) { return '<p class="text-xs leading-relaxed">' + l + '</p>'; }).join('') + '</div>' +
+        '<div class="' + CARD + '"><h3 class="font-bold text-sm">📊 Versements <span class="text-emerald-500">■</span> et dépenses <span class="text-red-500">■</span> (6 derniers mois)</h3><div class="flex gap-1">' + (bars || '<p class="text-xs text-gray-500">Pas encore de données.</p>') + '</div><p id="ngmTip" class="text-xs text-indigo-600 dark:text-indigo-400">' + tip + '</p></div>' +
+        (cats ? '<div class="' + CARD + '"><h3 class="font-bold text-sm">🧾 Répartition des dépenses</h3>' + cats + '</div>' : '') + extra;
+    }
+
+    // 4) Rapport : rubriques et camions à cocher
+    var chk = function (c) { return Array.prototype.map.call(document.querySelectorAll(c + ':checked'), function (x) { return x.value; }); };
+    function panel() {
+      var s = $('reportCategorySelect'); if (!s) return;
+      var g = s.parentNode.parentNode;
+      if (!$('ngmRp')) {
+        var d = document.createElement('div'); d.id = 'ngmRp'; d.className = 'col-span-full';
+        var items = [['REVENUE', '💚 Versements'], ['EXPENSE', '🔴 Dépenses (toutes)'], ['ROUTE', '🗺️ Trajets']].concat(EXPENSE_CATEGORIES.map(function (c) { return ['EXPENSE_CAT:' + c, '🔴 ' + c]; }));
+        d.innerHTML = '<label class="block text-xs font-semibold mb-1">Rubriques à inclure (cochez plusieurs)</label><div class="grid grid-cols-2 gap-1">' +
+          items.map(function (i) { return '<label class="flex items-center gap-2 text-xs"><input type="checkbox" class="ngm-rp rounded" value="' + i[0] + '"> ' + i[1] + '</label>'; }).join('') + '</div>';
+        g.appendChild(d);
+      }
+      var sig = (appData.trucks || []).map(function (t) { return t.id; }).join(), t = $('ngmRt');
+      if (!t) { t = document.createElement('div'); t.id = 'ngmRt'; t.className = 'col-span-full'; g.appendChild(t); }
+      if (t.dataset.sig !== sig) {
+        t.dataset.sig = sig;
+        t.innerHTML = '<label class="block text-xs font-semibold mb-1">Camions à inclure (cochez un ou plusieurs ; rien coché = filtre ci-dessus)</label><div class="grid grid-cols-1 gap-1">' +
+          (appData.trucks || []).map(function (k) { return '<label class="flex items-center gap-2 text-xs"><input type="checkbox" class="ngm-rt rounded" value="' + k.id + '"> 🚛 ' + E_(k.name) + ' (' + E_(k.immat) + ')</label>'; }).join('') + '</div>';
+      }
+    }
+    function recap(tr, picks) {
+      var s0 = $('reportStartDt').value, e0 = $('reportEndDt').value, R = 0, X = 0, RA = 0, XA = 0;
+      var cats = picks.filter(function (p) { return p.indexOf('EXPENSE_CAT:') === 0; }).map(function (p) { return p.slice(12); });
+      var wantR = !picks.length || picks.indexOf('REVENUE') > -1, allX = !picks.length || picks.indexOf('EXPENSE') > -1;
+      (appData.transactions || []).forEach(function (t) {
+        if (tr.length && tr.indexOf(t.truckId) < 0) return;
+        if (s0 && t.datetime < s0) return; if (e0 && t.datetime > e0) return;
+        var a = +t.amount || 0;
+        if (t.type === 'REVENUE') { RA += a; if (wantR) R += a; } else { XA += a; if (allX || cats.indexOf(t.category) > -1) X += a; }
+      });
+      var cost = (appData.trucks || []).filter(function (k) { return !tr.length || tr.indexOf(k.id) > -1; }).reduce(function (a, k) { return a + (+k.cost || 0); }, 0);
+      var debt = Math.max(0, cost - RA), net = Math.max(0, Math.max(0, RA - cost) - XA);
+      return '<div class="mt-6 border-t-2 pt-3 font-bold"><h3>Récapitulatif' + (tr.length ? ' (' + tr.length + ' camion' + (tr.length > 1 ? 's' : '') + ')' : '') + '</h3><p>Total versements reçus : ' + fm(R) + '</p><p>Total dépenses engagées : ' + fm(X) + '</p><p>Dette restante : ' + fm(debt) + '</p><p>Gain net (après dette et dépenses) : ' + fm(net) + '</p>' + (net === 0 ? '<p class="text-xs font-normal">' + (debt > 0 ? "Pas encore de gain : la dette n'est pas soldée." : 'Dette soldée : les dépenses absorbent pour l\'instant le gain.') + '</p>' : '') + '</div>';
+    }
+    function fixReport() {
+      var pc = $('previewContent'); if (!pc) return;
+      var s0 = $('reportStartDt').value, e0 = $('reportEndDt').value;
+      pc.querySelectorAll('table').forEach(function (tb) {
+        var th = tb.querySelector('thead'); if (!th || th.textContent.indexOf('Gain Pur Net') < 0) return;
+        var showP = th.textContent.indexOf('Prix') > -1, T = { c: 0, r: 0, d: 0, x: 0, g: 0, n: 0 }, nb = 0, td = function (v, c) { return '<td class="p-2 font-bold ' + c + '">' + fm(v) + '</td>'; };
+        var body = Array.prototype.map.call(tb.querySelectorAll('tbody tr'), function (tr) {
+          var nm = tr.cells[0].firstChild.textContent.trim(), t = (appData.trucks || []).filter(function (k) { return k.name === nm; })[0]; if (!t) return '';
+          var r = 0, x = 0; (appData.transactions || []).forEach(function (q) { if (q.truckId !== t.id) return; if (s0 && q.datetime < s0) return; if (e0 && q.datetime > e0) return; if (q.type === 'REVENUE') r += +q.amount || 0; else x += +q.amount || 0; });
+          var debt = Math.max(0, t.cost - r), g = Math.max(0, r - t.cost), n = Math.max(0, g - x); nb++;
+          T.c += +t.cost || 0; T.r += r; T.d += debt; T.x += x; T.g += g; T.n += n;
+          var st = debt > 0 ? '⏳ Dette en cours de remboursement : le gain n\'a pas encore commencé.' : n > 0 ? '✅ Dette soldée : gain net de ' + fm(n) + ' après dépenses.' : '✅ Dette soldée : les dépenses absorbent pour l\'instant le gain.';
+          return '<tr class="border-t"><td class="p-2 font-bold">' + E_(t.name) + '<br><span class="text-xs font-normal text-gray-500">' + E_(t.immat) + ' - ' + E_(t.driver) + '</span></td>' + (showP ? '<td class="p-2 font-mono">' + fm(t.cost) + '</td>' : '') + td(r, 'text-emerald-600') + td(debt, 'text-amber-600') + td(x, 'text-red-600') + td(g, 'text-blue-600') + td(n, 'text-indigo-600') + '</tr><tr><td colspan="7" class="px-2 pb-2 text-xs text-gray-500">' + st + '</td></tr>';
+        }).join('');
+        var tot = nb > 1 ? '<tr class="border-t-2 font-bold"><td class="p-2">TOTAL</td>' + (showP ? '<td class="p-2 font-mono">' + fm(T.c) + '</td>' : '') + td(T.r, 'text-emerald-600') + td(T.d, 'text-amber-600') + td(T.x, 'text-red-600') + td(T.g, 'text-blue-600') + td(T.n, 'text-indigo-600') + '</tr>' : '';
+        tb.setAttribute('data-fixed', '1');
+        tb.innerHTML = '<thead class="bg-gray-100 uppercase border-b"><tr><th class="p-2">Camion</th>' + (showP ? '<th class="p-2">Prix d\'achat</th>' : '') + '<th class="p-2">Versements reçus</th><th class="p-2">Dette restante</th><th class="p-2">Dépenses engagées</th><th class="p-2">Gain pur (après dette soldée)</th><th class="p-2">Gain net (après dépenses)</th></tr></thead><tbody>' + body + tot + '</tbody>';
+      });
+    }
+    function scrubNeg() {
+      var pc = $('previewContent'); if (!pc) return;
+      pc.querySelectorAll('td,p,b,span,div,strong').forEach(function (e) {
+        if (e.children.length) return; var t = e.textContent.trim();
+        if (!/^-\s?\d[\d\s\u00a0\u202f.,]*\s?FCFA$/.test(t)) return;
+        var tb = e.closest('table'), th = tb && e.tagName === 'TD' ? tb.querySelectorAll('thead th')[e.cellIndex] : null;
+        var lab = (th ? th.textContent : '') + ' ' + ((e.closest('tr') || e.parentNode).textContent || '');
+        if (/gain|net|solde|r[ée]sultat/i.test(lab)) e.textContent = '0 FCFA';
+      });
+    }
+    function scrubGain() {
+      var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), n, re = /^\s*-\s?\d[\d\s\u00a0\u202f.,]*\s?FCFA\s*$/;
+      while ((n = w.nextNode())) {
+        if (!re.test(n.nodeValue)) continue;
+        var p = n.parentNode, g = p && p.parentNode;
+        if ((p && /gain/i.test(p.textContent) && p.textContent.length < 90) || (g && g.textContent.length < 160 && /gain/i.test(g.textContent))) { n.nodeValue = '0 FCFA'; }
+      }
+      Array.prototype.forEach.call(document.querySelectorAll('span.block,b'), function (e) { if (!e.children.length && e.textContent.trim() === 'Gain net') e.textContent = 'Gain net (après dette et dépenses)'; });
+    }
+    var sgT = null;
+    function fixDash() {
+      var v = $('view-dashboard'); if (!v) return;
+      v.querySelectorAll('span,th').forEach(function (e) {
+        if (e.children.length) return; var t = e.textContent.trim();
+        if (t === 'Gain Pur Net Réel') e.textContent = 'Gain net (après dette et dépenses)'; else if (t === 'Gain Pur Brut') e.textContent = 'Gain pur (après dette soldée)';
+      });
+      var P = $('dashTotalProfit');
+      if (P) { if (/^-/.test(P.textContent.trim())) P.textContent = '0 FCFA'; var sub = P.nextElementSibling; if (sub && P.textContent.indexOf('•') < 0) { var tx = /^0\s?FCFA$/.test(P.textContent.trim()) ? "Pas encore de gain : la dette n'est pas soldée ou les dépenses ne sont pas couvertes." : 'Gain obtenu après remboursement de la dette et déduction des dépenses.'; if (sub.textContent !== tx) sub.textContent = tx; } }
+      v.querySelectorAll('td.text-red-500').forEach(function (c) { if (/^-/.test(c.textContent.trim())) { c.textContent = '0 FCFA'; c.title = 'Gain pas encore atteint'; } });
+    }
+    function hookReport() {
+      var G = window.generateAndPrintReport;
+      window.generateAndPrintReport = function () {
+        var picks = chk('.ngm-rp'), tr = chk('.ngm-rt'), s = $('reportCategorySelect'), f = $('reportTruckFilter'), op = window.print, out = '', s0 = s.value, f0 = f.value;
+        var origTx = appData.transactions; appData.transactions = (origTx || []).slice().sort(function (a, b) { return TK(a.datetime) - TK(b.datetime); });
+        window.print = function () {};
+        try {
+          if (!picks.length && !tr.length) { G(); }
+          else {
+            var list = tr.length ? tr : [f.value], ps = picks.length ? picks : [s.value];
+            G();
+            list.forEach(function (id) {
+              f.value = id; var nm = f.selectedIndex >= 0 ? f.options[f.selectedIndex].text : '';
+              out += '<h2 class="font-bold text-base mt-5 border-b pb-1">🚛 ' + E_(nm) + '</h2>';
+              ps.forEach(function (v) { s.value = v; G(); out += '<h3 class="font-bold mt-3 mb-1">' + E_(s.options[s.selectedIndex].text) + '</h3>' + $('previewContent').innerHTML; });
+            });
+            s.value = s0; f.value = f0;
+            $('previewContent').innerHTML = out + recap(tr, picks);
+            var pt = $('printReportTruck');
+            if (pt && tr.length) pt.textContent = 'Camion' + (tr.length > 1 ? 's' : '') + ' : ' + tr.map(function (id) { var k = (appData.trucks || []).filter(function (t) { return t.id === id; })[0]; return k ? k.name + ' (' + k.immat + ')' : ''; }).join(', ');
+          }
+          fixReport(); scrubNeg();
+        } finally { appData.transactions = origTx; window.print = op; s.value = s0; f.value = f0; }
+        window.print();
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var v = $('view-dashboard');
+      if (v) { var a = document.createElement('div'); a.id = 'ngmWho'; var b = document.createElement('div'); b.id = 'ngmExtra'; b.className = 'space-y-6'; v.appendChild(a); v.appendChild(b); }
+      var sv = $('view-security');
+      if (sv) { var k = document.createElement('div'); k.className = CARD + ' admin-only hidden'; k.innerHTML = '<h3 class="font-bold text-sm">🔑 Code d\'entrée de l\'application</h3><p class="text-xs text-gray-500">Demandé une seule fois sur chaque appareil (par défaut 2025). Différent du code administrateur.</p><input id="ngmEntryIn" type="password" maxlength="4" placeholder="Nouveau code (4 chiffres)" class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"><button onclick="ngmSaveEntry()" class="w-full py-2 bg-indigo-600 text-white rounded-lg text-sm">Enregistrer</button><label class="flex items-center gap-2 text-xs pt-2 border-t dark:border-gray-700"><input id="ngmAmtCb" type="checkbox" onchange="ngmAmt(this.checked)" class="rounded"> Montrer les montants à tous les clients (réglage général ; le réglage « Droits » d\'un client est prioritaire)</label>'; sv.appendChild(k); }
+      var sd = window.saveData;
+      window.saveData = function () { var full = appData, v = viewFor(); if (v) appData = v; try { return sd.apply(this, arguments); } finally { appData = full; } };
+      ['revenueTableBody', 'expenseTableBody', 'routeTableBody'].forEach(function (id) {
+        var tb = $(id), tbl = tb && tb.closest('table'); if (!tbl) return;
+        var bx = document.createElement('div'); bx.className = 'flex items-center gap-2 text-xs mb-2 admin-only hidden';
+        bx.innerHTML = '<span>Trier par</span><select class="ngm-sort px-2 py-1 rounded border dark:border-gray-600 bg-white dark:bg-gray-700" onchange="ngmSort(this.value)">' + [['dateDesc', 'Date : plus récent en haut'], ['dateAsc', 'Date : plus ancien en haut'], ['amtDesc', 'Montant : du plus grand au plus petit'], ['amtAsc', 'Montant : du plus petit au plus grand'], ['truck', 'Par camion']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === SORT ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>';
+        tbl.parentNode.insertBefore(bx, tbl);
+      });
+      var st = document.createElement('style'); st.textContent = '.ngm-dup{background:rgba(239,68,68,.18)!important}'; document.head.appendChild(st);
+      var ht = window.handleAddTransaction;
+      window.handleAddTransaction = function (e) {
+        var ty = $('txTypeHidden').value, id = $('modalTruckSelect').value, am = parseFloat($('modalAmount').value), dt = $('modalTxDateTime').value;
+        if (id && !isNaN(am) && dt) {
+          var d = dt.slice(0, 10), dup = (appData.transactions || []).filter(function (t) { return t.truckId === id && t.type === ty && +t.amount === am && String(t.datetime).slice(0, 10) === d; });
+          if (dup.length) {
+            e.preventDefault();
+            if (!confirm('⚠️ DOUBLON POSSIBLE : ' + dup.length + ' écriture(s) identique(s) (même camion/chauffeur, même montant, même date) existe(nt) déjà :\n' + dup.map(function (t) { return '• ' + String(t.datetime).replace('T', ' ') + ' — ' + fm(t.amount) + ' — ' + t.label; }).join('\n') + '\n\nEnregistrer quand même ?')) return;
+          }
+        }
+        return ht.apply(this, arguments);
+      };
+      var ra = window.renderApp;
+      window.renderApp = function () {
+        var full = appData, v = viewFor(); if (v) appData = v;
+        try { ra.apply(this, arguments); var cb = $('ngmAmtCb'); if (cb) cb.checked = !!full.clientAmounts; draw(); panel(); mask(); fixDash(); scrubGain(); if (isAdminMode) { dupMark(); } sortLists(); } catch (e) { console.warn(e); } finally { appData = full; }
+        try { who(); beat(); } catch (e) {}
+      };
+      hookReport();
+      try { new MutationObserver(function () { clearTimeout(sgT); sgT = setTimeout(scrubGain, 80); }).observe(document.body, { childList: true, subtree: true, characterData: true }); } catch (e) {}
+      try { new MutationObserver(function () { mask(); fixDash(); }).observe($('view-dashboard'), { childList: true, characterData: true, subtree: true }); } catch (e) {}
+      try { draw(); panel(); mask(); } catch (e) {}
+      var hd = document.querySelector('header'), taps = [];
+      document.addEventListener('click', function (e) {
+        if (e.clientY > 110 || e.target.closest('#lockBtn')) return;
+        var n = Date.now(); taps.push(n); taps = taps.filter(function (t) { return n - t < 3000; });
+        if (taps.length >= 5) {
+          taps = [];
+          var c = prompt('Code administrateur pour déverrouiller cet appareil :');
+          if (c !== null) { if (c === (appData.securityPin || '2026')) { try { localStorage.NGM_OWNER = '1'; } catch (x) {} owner = true; var l = $('lockBtn'); if (l) l.style.display = ''; alert('Appareil déverrouillé : le bouton Mode administrateur est visible.'); } else alert('Code incorrect.'); }
+        }
+      });
+      var lb0 = $('lockBtn'); if (lb0) lb0.style.display = canAdminBtn() ? '' : 'none';
+      if (U) {
+        watchBan(); watchPerm();
+        try { myName = localStorage.NGM_NAME || ''; } catch (e) {}
+        setTimeout(function () {
+          if (!myName) { myName = (prompt('Votre nom ?') || '').trim() || 'Invité'; try { localStorage.NGM_NAME = myName; } catch (e) {} }
+          beat(); who();
+        }, 2500);
+        setInterval(function () { beat(); who(); }, 30000);
+      }
+    });
+  })();
+  </script>
+
+</body>
+</html>
+
